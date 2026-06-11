@@ -1,7 +1,7 @@
 getgenv().SHAMPO = true
 if game.GameId ~= 4652005960 then return end
 
--- Kütüphaneler tamamen senin kendi public depondan çekiliyor!
+-- Kütüphaneler senin kendi public depondan çekiliyor!
 local repo = "https://raw.githubusercontent.com/mirayukiasura-alt/Aslanlar/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "ThemeManager.lua"))()
@@ -13,11 +13,11 @@ local VIM = game:GetService("VirtualInputManager")
 local LP = Players.LocalPlayer
 
 --------------------------------------------------
--- WINDOW & TABS
+-- WINDOW & TABS (SOL ÜST KISIM SIĞACAK ŞEKİLDE DÜZENLENDİ)
 --------------------------------------------------
 local Window = Library:CreateWindow({
-    Title = "Aslanlar HUB | UNBAN MIRA YUKI",
-    Footer = "FREE MIRA | UNBAN MIRA YUKI",
+    Title = "AslanlarHUB", -- Sol üst köşede taşma yapmaması için sığacak şekilde kısaltıldı
+    Footer = "FREE MIRA | UNBAN MIRA YUKI", -- Alt bilgi alanı
     NotifySide = "Right",
     ShowCustomCursor = false
 })
@@ -31,7 +31,7 @@ local Tabs = {
 local FarmBox = Tabs.Main:AddLeftGroupbox("Combat Tools")
 local AutoBox = Tabs.Main:AddRightGroupbox("Automation")
 
--- Main Tab İçerisine Belirgin "UNBAN MIRA YUKI" ve "FREE MIRA" Etiketi
+-- Main Tab İçerisine Belirgin Etiketler
 FarmBox:AddLabel("⚠️ UNBAN MIRA YUKI ⚠️", true)
 FarmBox:AddLabel("📢 FREE MIRA 📢", true)
 FarmBox:AddDivider()
@@ -213,7 +213,7 @@ local ProceedToggle = AutoBox:AddToggle("AutoProceed", {Text = "Auto Proceed Sta
 ProceedToggle:AddKeyPicker("ProceedBind", {Default = "Z", NoUI = false, Text = "Auto Proceed", SyncToggleState = true})
 
 --------------------------------------------------
--- SKILL DATABASE (GENİŞLETİLMİŞ VE YENİ STİLLER EKLENDİ)
+-- SKILL DATABASE
 --------------------------------------------------
 local MasterSkillList = {
     -- Karate
@@ -271,7 +271,7 @@ local MasterSkillList = {
     {Name = "Falling Elbow", CD = 23, Type = "Normal", Style = "Muay Thai"},
     {Name = "Raging Flame", CD = 60, Type = "Ultimate", Style = "Muay Thai"},
 
-    -- Wrestling (Süreler geçici, düzenlenebilir)
+    -- Wrestling
     {Name = "Dropkick", CD = 25, Type = "Normal", Style = "Wrestling"},
     {Name = "Flash Suplex", CD = 25, Type = "Normal", Style = "Wrestling"},
     {Name = "Back Breaker", CD = 25, Type = "Normal", Style = "Wrestling"},
@@ -279,7 +279,7 @@ local MasterSkillList = {
     {Name = "Spinning Lariat", CD = 25, Type = "Normal", Style = "Wrestling"},
     {Name = "Unstoppable Force", CD = 60, Type = "Ultimate", Style = "Wrestling"},
 
-    -- Sumo (Süreler geçici, düzenlenebilir)
+    -- Sumo
     {Name = "Hundred Palms", CD = 25, Type = "Normal", Style = "Sumo"},
     {Name = "Yaguranage", CD = 25, Type = "Normal", Style = "Sumo"},
     {Name = "Sumo Rush", CD = 25, Type = "Normal", Style = "Sumo"},
@@ -287,14 +287,14 @@ local MasterSkillList = {
     {Name = "Bear Hug", CD = 25, Type = "Normal", Style = "Sumo"},
     {Name = "Haymaker", CD = 60, Type = "Ultimate", Style = "Sumo"},
 
-    -- Beast (Süreler geçici, düzenlenebilir)
+    -- Beast
     {Name = "Beast Launch", CD = 25, Type = "Normal", Style = "Beast"},
     {Name = "Tiger Slam", CD = 25, Type = "Normal", Style = "Beast"},
     {Name = "Ground Quake", CD = 25, Type = "Normal", Style = "Beast"},
     {Name = "Beast Claw", CD = 25, Type = "Normal", Style = "Beast"},
     {Name = "Pure Power", CD = 60, Type = "Ultimate", Style = "Beast"},
 
-    -- Koei (Süreler geçici, düzenlenebilir)
+    -- Koei
     {Name = "Blink", CD = 25, Type = "Normal", Style = "Koei"},
     {Name = "Twin Rakashasa’s", CD = 25, Type = "Normal", Style = "Koei"},
     {Name = "Rakashasa’s Sole", CD = 25, Type = "Normal", Style = "Koei"},
@@ -308,7 +308,7 @@ local StyleNames = {"Karate", "Boxing", "Taekwondo", "Capoeira", "Judo", "Kung F
 --------------------------------------------------
 local SkillSettings = Tabs.Skills:AddLeftGroupbox("Settings")
 
--- Skills Tab İçerisine Belirgin "UNBAN MIRA YUKI" ve "FREE MIRA" Etiketi
+-- Skills Tab İçerisine Belirgin Etiketler
 SkillSettings:AddLabel("⚔️ UNBAN MIRA YUKI ⚔️", true)
 SkillSettings:AddLabel("📢 FREE MIRA 📢", true)
 SkillSettings:AddDivider()
