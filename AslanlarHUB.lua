@@ -1,7 +1,6 @@
 getgenv().SHAMPO = true
 if game.GameId ~= 4652005960 then return end
 
--- Kütüphaneler senin kendi public depondan çekiliyor!
 local repo = "https://raw.githubusercontent.com/mirayukiasura-alt/Aslanlar/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "ThemeManager.lua"))()
@@ -12,12 +11,9 @@ local RunService = game:GetService("RunService")
 local VIM = game:GetService("VirtualInputManager")
 local LP = Players.LocalPlayer
 
---------------------------------------------------
--- WINDOW & TABS (SOL ÜST KISIM SIĞACAK ŞEKİLDE DÜZENLENDİ)
---------------------------------------------------
 local Window = Library:CreateWindow({
-    Title = "AslanlarHUB", -- Sol üst köşede taşma yapmaması için sığacak şekilde kısaltıldı
-    Footer = "FREE MIRA | UNBAN MIRA YUKI", -- Alt bilgi alanı
+    Title = "AslanlarHUB",
+    Footer = "FREE MIRA | UNBAN MIRA YUKI",
     NotifySide = "Right",
     ShowCustomCursor = false
 })
@@ -31,14 +27,10 @@ local Tabs = {
 local FarmBox = Tabs.Main:AddLeftGroupbox("Combat Tools")
 local AutoBox = Tabs.Main:AddRightGroupbox("Automation")
 
--- Main Tab İçerisine Belirgin Etiketler
 FarmBox:AddLabel("⚠️ UNBAN MIRA YUKI ⚠️", true)
 FarmBox:AddLabel("📢 FREE MIRA 📢", true)
 FarmBox:AddDivider()
 
---------------------------------------------------
--- TOOL SYSTEM
---------------------------------------------------
 getgenv().SelectedWeapon = nil
 getgenv().CombatWeapon = nil
 
@@ -70,9 +62,6 @@ FarmBox:AddButton("Refresh Tools", function()
     combatDrop:SetValues(tools)
 end)
 
---------------------------------------------------
--- AUTO HIT & ATTACH (WITH KEYBINDS)
---------------------------------------------------
 local AutoHit = false
 local StopAt = 50
 getgenv().Height = -6.5
@@ -141,9 +130,6 @@ local AttachToggle = FarmBox:AddToggle("Attach", {
 AttachToggle:AddKeyPicker("AttachBind", {Default = "H", NoUI = false, Text = "Attach", SyncToggleState = true})
 FarmBox:AddSlider("HeightVal", {Text = "Height Offset", Min = -10, Max = 10, Default = -6.5, Callback = function(v) getgenv().Height = v end})
 
---------------------------------------------------
--- AUTOMATION (Proceed & Round Tool)
---------------------------------------------------
 local UseEachRound = false
 local UsedThisRound = false
 local AutoProceed = false
@@ -213,102 +199,98 @@ local ProceedToggle = AutoBox:AddToggle("AutoProceed", {Text = "Auto Proceed Sta
 ProceedToggle:AddKeyPicker("ProceedBind", {Default = "Z", NoUI = false, Text = "Auto Proceed", SyncToggleState = true})
 
 --------------------------------------------------
--- SKILL DATABASE
+-- SKILL DATABASE (COOLDOWNS UPDATED)
 --------------------------------------------------
 local MasterSkillList = {
     -- Karate
-    {Name = "Jinrai Kicks", CD = 33, Type = "Normal", Style = "Karate"},
-    {Name = "Controlled punch", CD = 28, Type = "Normal", Style = "Karate"},
-    {Name = "Roundhouse Kick", CD = 28, Type = "Normal", Style = "Karate"},
-    {Name = "Side kick", CD = 23, Type = "Normal", Style = "Karate"},
-    {Name = "High kick", CD = 22.9, Type = "Normal", Style = "Karate"},
-    {Name = "Devil Strike", CD = 50, Type = "Ultimate", Style = "Karate"},
+    {Name = "Jinrai Kicks",      CD = 33,   Type = "Normal",   Style = "Karate"},
+    {Name = "Controlled punch",  CD = 28,   Type = "Normal",   Style = "Karate"},
+    {Name = "Roundhouse Kick",   CD = 28,   Type = "Normal",   Style = "Karate"},
+    {Name = "Side kick",         CD = 23,   Type = "Normal",   Style = "Karate"},
+    {Name = "High kick",         CD = 22.9, Type = "Normal",   Style = "Karate"},
+    {Name = "Devil Strike",      CD = 50,   Type = "Ultimate", Style = "Karate"},
 
     -- Boxing
-    {Name = "Tri-Jab", CD = 13, Type = "Normal", Style = "Boxing"},
-    {Name = "Gazelle Punch", CD = 18, Type = "Normal", Style = "Boxing"},
-    {Name = "Liver Blow", CD = 23, Type = "Normal", Style = "Boxing"},
-    {Name = "White Fang", CD = 23, Type = "Normal", Style = "Boxing"},
-    {Name = "Corkscrew", CD = 17.9, Type = "Normal", Style = "Boxing"},
-    {Name = "Gatling Knockout", CD = 50, Type = "Ultimate", Style = "Boxing"},
+    {Name = "Tri-Jab",           CD = 13,   Type = "Normal",   Style = "Boxing"},
+    {Name = "Gazelle Punch",     CD = 18,   Type = "Normal",   Style = "Boxing"},
+    {Name = "Liver Blow",        CD = 23,   Type = "Normal",   Style = "Boxing"},
+    {Name = "White Fang",        CD = 23,   Type = "Normal",   Style = "Boxing"},
+    {Name = "Corkscrew",         CD = 17.9, Type = "Normal",   Style = "Boxing"},
+    {Name = "Gatling Knockout",  CD = 50,   Type = "Ultimate", Style = "Boxing"},
 
     -- Taekwondo
-    {Name = "King’s Horse", CD = 33, Type = "Normal", Style = "Taekwondo"},
-    {Name = "540 Kick", CD = 33, Type = "Normal", Style = "Taekwondo"},
-    {Name = "Slam Dunk", CD = 43, Type = "Normal", Style = "Taekwondo"},
-    {Name = "Jumping Roundhouse", CD = 28, Type = "Normal", Style = "Taekwondo"},
-    {Name = "Temple Hook Kick", CD = 27.8, Type = "Normal", Style = "Taekwondo"},
-    {Name = "Axe Rampage", CD = 50, Type = "Ultimate", Style = "Taekwondo"},
+    {Name = "King's Horse",      CD = 33,   Type = "Normal",   Style = "Taekwondo"},
+    {Name = "540 Kick",          CD = 33,   Type = "Normal",   Style = "Taekwondo"},
+    {Name = "Slam Dunk",         CD = 43,   Type = "Normal",   Style = "Taekwondo"},
+    {Name = "Jumping Roundhouse",CD = 28,   Type = "Normal",   Style = "Taekwondo"},
+    {Name = "Temple Hook Kick",  CD = 27.8, Type = "Normal",   Style = "Taekwondo"},
+    {Name = "Axe Rampage",       CD = 50,   Type = "Ultimate", Style = "Taekwondo"},
 
     -- Capoeira
-    {Name = "Roundabout", CD = 22, Type = "Normal", Style = "Capoeira"},
-    {Name = "Drill Kick", CD = 28, Type = "Normal", Style = "Capoeira"},
-    {Name = "Rolling Axe", CD = 16, Type = "Normal", Style = "Capoeira"},
-    {Name = "Crouching Roundhouse", CD = 21, Type = "Normal", Style = "Capoeira"},
-    {Name = "Sweeping Round Hook", CD = 28, Type = "Normal", Style = "Capoeira"},
-    {Name = "Tinta Tempo", CD = 50, Type = "Ultimate", Style = "Capoeira"},
+    {Name = "Roundabout",        CD = 22,   Type = "Normal",   Style = "Capoeira"},
+    {Name = "Drill Kick",        CD = 28,   Type = "Normal",   Style = "Capoeira"},
+    {Name = "Rolling Axe",       CD = 16,   Type = "Normal",   Style = "Capoeira"},
+    {Name = "Crouching Roundhouse", CD = 21, Type = "Normal",  Style = "Capoeira"},
+    {Name = "Sweeping Round Hook", CD = 28, Type = "Normal",   Style = "Capoeira"},
+    {Name = "Tinta Tempo",       CD = 50,   Type = "Ultimate", Style = "Capoeira"},
 
     -- Judo
-    {Name = "Lariat Counter", CD = 26, Type = "Normal", Style = "Judo"},
-    {Name = "Sweep Takedown", CD = 18, Type = "Normal", Style = "Judo"},
-    {Name = "Lotus Crash", CD = 17.2, Type = "Normal", Style = "Judo"},
-    {Name = "Shoulder Throw", CD = 27.2, Type = "Normal", Style = "Judo"},
-    {Name = "Demon Grip", CD = 50, Type = "Ultimate", Style = "Judo"},
+    {Name = "Lariat Counter",    CD = 26,   Type = "Normal",   Style = "Judo"},
+    {Name = "Sweep Takedown",    CD = 18,   Type = "Normal",   Style = "Judo"},
+    {Name = "Lotus Crash",       CD = 17.2, Type = "Normal",   Style = "Judo"},
+    {Name = "Shoulder Throw",    CD = 27.2, Type = "Normal",   Style = "Judo"},
+    {Name = "Demon Grip",        CD = 50,   Type = "Ultimate", Style = "Judo"},
 
     -- Kung Fu
-    {Name = "Dragon Kick", CD = 27.9, Type = "Normal", Style = "Kung Fu"},
-    {Name = "Tiger Hunt", CD = 28, Type = "Normal", Style = "Kung Fu"},
-    {Name = "Fajin", CD = 28, Type = "Normal", Style = "Kung Fu"},
-    {Name = "Shadowless Kick", CD = 22.9, Type = "Normal", Style = "Kung Fu"},
-    {Name = "Palm Strike", CD = 25, Type = "Normal", Style = "Kung Fu"},
-    {Name = "1000 Deaths", CD = 60, Type = "Ultimate", Style = "Kung Fu"},
+    {Name = "Dragon Kick",       CD = 27.9, Type = "Normal",   Style = "Kung Fu"},
+    {Name = "Tiger Hunt",        CD = 28,   Type = "Normal",   Style = "Kung Fu"},
+    {Name = "Fajin",             CD = 28,   Type = "Normal",   Style = "Kung Fu"},
+    {Name = "Shadowless Kick",   CD = 22.9, Type = "Normal",   Style = "Kung Fu"},
+    {Name = "Palm Strike",       CD = 25,   Type = "Normal",   Style = "Kung Fu"},
+    {Name = "1000 Deaths",       CD = 60,   Type = "Ultimate", Style = "Kung Fu"},
 
     -- Muay Thai
-    {Name = "Cartwheel Kick", CD = 23, Type = "Normal", Style = "Muay Thai"},
-    {Name = "Hammer of Burma", CD = 28, Type = "Normal", Style = "Muay Thai"},
-    {Name = "Flying Knee", CD = 23, Type = "Normal", Style = "Muay Thai"},
-    {Name = "Spinning Elbow", CD = 27.9, Type = "Normal", Style = "Muay Thai"},
-    {Name = "Falling Elbow", CD = 23, Type = "Normal", Style = "Muay Thai"},
-    {Name = "Raging Flame", CD = 60, Type = "Ultimate", Style = "Muay Thai"},
+    {Name = "Cartwheel Kick",    CD = 23,   Type = "Normal",   Style = "Muay Thai"},
+    {Name = "Hammer of Burma",   CD = 28,   Type = "Normal",   Style = "Muay Thai"},
+    {Name = "Flying Knee",       CD = 23,   Type = "Normal",   Style = "Muay Thai"},
+    {Name = "Spinning Elbow",    CD = 27.9, Type = "Normal",   Style = "Muay Thai"},
+    {Name = "Falling Elbow",     CD = 23,   Type = "Normal",   Style = "Muay Thai"},
+    {Name = "Raging Flame",      CD = 60,   Type = "Ultimate", Style = "Muay Thai"},
 
     -- Wrestling
-    {Name = "Dropkick", CD = 25, Type = "Normal", Style = "Wrestling"},
-    {Name = "Flash Suplex", CD = 25, Type = "Normal", Style = "Wrestling"},
-    {Name = "Back Breaker", CD = 25, Type = "Normal", Style = "Wrestling"},
-    {Name = "Head Smasher", CD = 25, Type = "Normal", Style = "Wrestling"},
-    {Name = "Spinning Lariat", CD = 25, Type = "Normal", Style = "Wrestling"},
-    {Name = "Unstoppable Force", CD = 60, Type = "Ultimate", Style = "Wrestling"},
+    {Name = "Dropkick",          CD = 18,   Type = "Normal",   Style = "Wrestling"},
+    {Name = "Flash Suplex",      CD = 22,   Type = "Normal",   Style = "Wrestling"},
+    {Name = "Back Breaker",      CD = 28,   Type = "Normal",   Style = "Wrestling"},
+    {Name = "Head Smasher",      CD = 15,   Type = "Normal",   Style = "Wrestling"},
+    {Name = "Spinning Lariat",   CD = 25,   Type = "Normal",   Style = "Wrestling"},
+    {Name = "Unstoppable Force", CD = 60,   Type = "Ultimate", Style = "Wrestling"},
 
     -- Sumo
-    {Name = "Hundred Palms", CD = 25, Type = "Normal", Style = "Sumo"},
-    {Name = "Yaguranage", CD = 25, Type = "Normal", Style = "Sumo"},
-    {Name = "Sumo Rush", CD = 25, Type = "Normal", Style = "Sumo"},
-    {Name = "Body Slam", CD = 25, Type = "Normal", Style = "Sumo"},
-    {Name = "Bear Hug", CD = 25, Type = "Normal", Style = "Sumo"},
-    {Name = "Haymaker", CD = 60, Type = "Ultimate", Style = "Sumo"},
+    {Name = "Hundred Palms",     CD = 16,   Type = "Normal",   Style = "Sumo"},
+    {Name = "Yaguranage",        CD = 28,   Type = "Normal",   Style = "Sumo"},
+    {Name = "Sumo Rush",         CD = 20,   Type = "Normal",   Style = "Sumo"},
+    {Name = "Body Slam",         CD = 23,   Type = "Normal",   Style = "Sumo"},
+    {Name = "Bear Hug",          CD = 30,   Type = "Normal",   Style = "Sumo"},
+    {Name = "Haymaker",          CD = 60,   Type = "Ultimate", Style = "Sumo"},
 
     -- Beast
-    {Name = "Beast Launch", CD = 25, Type = "Normal", Style = "Beast"},
-    {Name = "Tiger Slam", CD = 25, Type = "Normal", Style = "Beast"},
-    {Name = "Ground Quake", CD = 25, Type = "Normal", Style = "Beast"},
-    {Name = "Beast Claw", CD = 25, Type = "Normal", Style = "Beast"},
-    {Name = "Pure Power", CD = 60, Type = "Ultimate", Style = "Beast"},
+    {Name = "Beast Launch",      CD = 20,   Type = "Normal",   Style = "Beast"},
+    {Name = "Tiger Slam",        CD = 28,   Type = "Normal",   Style = "Beast"},
+    {Name = "Ground Quake",      CD = 33,   Type = "Normal",   Style = "Beast"},
+    {Name = "Beast Claw",        CD = 18,   Type = "Normal",   Style = "Beast"},
+    {Name = "Pure Power",        CD = 60,   Type = "Ultimate", Style = "Beast"},
 
     -- Koei
-    {Name = "Blink", CD = 25, Type = "Normal", Style = "Koei"},
-    {Name = "Twin Rakashasa’s", CD = 25, Type = "Normal", Style = "Koei"},
-    {Name = "Rakashasa’s Sole", CD = 25, Type = "Normal", Style = "Koei"},
-    {Name = "Beautiful Beast", CD = 60, Type = "Ultimate", Style = "Koei"}
+    {Name = "Blink",             CD = 15,   Type = "Normal",   Style = "Koei"},
+    {Name = "Twin Rakashasa's",  CD = 25,   Type = "Normal",   Style = "Koei"},
+    {Name = "Rakashasa's Sole",  CD = 22,   Type = "Normal",   Style = "Koei"},
+    {Name = "Beautiful Beast",   CD = 60,   Type = "Ultimate", Style = "Koei"},
 }
 
 local StyleNames = {"Karate", "Boxing", "Taekwondo", "Capoeira", "Judo", "Kung Fu", "Muay Thai", "Wrestling", "Sumo", "Beast", "Koei"}
 
---------------------------------------------------
--- SKILL TAB SETUP
---------------------------------------------------
 local SkillSettings = Tabs.Skills:AddLeftGroupbox("Settings")
 
--- Skills Tab İçerisine Belirgin Etiketler
 SkillSettings:AddLabel("⚔️ UNBAN MIRA YUKI ⚔️", true)
 SkillSettings:AddLabel("📢 FREE MIRA 📢", true)
 SkillSettings:AddDivider()
@@ -324,9 +306,6 @@ for i, styleName in ipairs(StyleNames) do
     StyleBoxes[styleName]:AddLabel("Waiting detection...", true)
 end
 
---------------------------------------------------
--- STATE MANAGEMENT
---------------------------------------------------
 getgenv().SkillDelay = 6
 getgenv().SkillInterval = 3
 
@@ -385,9 +364,6 @@ end
 
 SkillSettings:AddButton("1. Detect Owned Skills", DetectOwnedSkills)
 
---------------------------------------------------
--- TARGET & RESET LOGIC
---------------------------------------------------
 local function GetClosestMob()
     local char = LP.Character
     if not char then return nil end
@@ -410,15 +386,9 @@ local function GetClosestMob()
     return closest
 end
 
---------------------------------------------------
--- SMART SKILL CASTING
---------------------------------------------------
 local function CanUseSkill(skillData)
     local lastUsed = SkillTimers[skillData.Name] or 0
-    if tick() - lastUsed >= skillData.CD then
-        return true
-    end
-    return false
+    return tick() - lastUsed >= skillData.CD
 end
 
 local function CastSkill(skillData)
@@ -426,15 +396,12 @@ local function CastSkill(skillData)
     if not char then return false end
     local backpack = LP.Backpack
     local tool = backpack:FindFirstChild(skillData.Name)
-    
     if not tool then return false end
 
     char.Humanoid:EquipTool(tool)
     task.wait(0.15)
     VIM:SendMouseButtonEvent(0, 0, 0, true, game, 0)
     VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-    
-    -- Flicker
     task.wait(0.05)
     if getgenv().CombatWeapon then
         local cTool = backpack:FindFirstChild(getgenv().CombatWeapon)
@@ -445,9 +412,6 @@ local function CastSkill(skillData)
     return true
 end
 
---------------------------------------------------
--- MAIN LOOP (WITH KEYBIND)
---------------------------------------------------
 local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
     Text = "Start Smart Rotation",
     Default = false,
@@ -458,11 +422,11 @@ local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
                 task.wait(getgenv().SkillDelay)
                 
                 while toggleRef do
-                     local currentTarget = GetClosestMob()
+                    local currentTarget = GetClosestMob()
                     
                     if not currentTarget then
                         task.wait(1)
-                     else
+                    else
                         if LastTarget ~= currentTarget then
                             ResetCooldowns()
                             LastTarget = currentTarget
@@ -471,7 +435,6 @@ local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
                         local skillToUse = nil
                         local foundReadySkill = false
                         
-                        -- Normal Skilleri Dene
                         for _, skill in pairs(DetectedSkills) do
                             if skill.Type == "Normal" then
                                 if CanUseSkill(skill) then
@@ -482,7 +445,6 @@ local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
                             end
                         end
                         
-                        -- ULTIMATE MANTIĞI:
                         if not foundReadySkill and TotalNormalSkills > 0 then
                             if NormalCastCount >= TotalNormalSkills then
                                 for _, skill in pairs(DetectedSkills) do
@@ -495,21 +457,21 @@ local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
                                     end
                                 end
                             end
-                       end
+                        end
                         
                         if skillToUse then
                             if CastSkill(skillToUse) then
-                               if skillToUse.Type == "Normal" then
+                                if skillToUse.Type == "Normal" then
                                     NormalCastCount = NormalCastCount + 1
                                 end
-                                 task.wait(getgenv().SkillInterval)
+                                task.wait(getgenv().SkillInterval)
                             else
                                 task.wait(0.5)
                             end
                         else
                             task.wait(1)
                         end
-                     end
+                    end
                 end
             end)
         end
@@ -518,9 +480,6 @@ local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
 
 SkillToggle:AddKeyPicker("SkillBind", {Default = "T", NoUI = false, Text = "Auto Skill", SyncToggleState = true})
 
---------------------------------------------------
--- UI SETTINGS & CONFIG ENTEGRASYONU
---------------------------------------------------
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu Settings")
 
 MenuGroup:AddDropdown("DPIDropdown", {
@@ -554,4 +513,4 @@ ThemeManager:ApplyToTab(Tabs["UI Settings"])
 ThemeManager:ApplyTheme("Default")
 
 SaveManager:LoadAutoloadConfig()
-Library:Toggle(false);
+Library:Toggle(false)
