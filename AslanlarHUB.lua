@@ -1,7 +1,7 @@
 getgenv().ASURA = true 
 if game.GameId == 4652005960 and getgenv().ASURA == true then 
 
-    -- Kütüphaneleri senin kendi public depondan çekiyoruz
+    -- Kütüphaneler tamamen senin kendi public depondan çekiliyor
     local repo = "https://raw.githubusercontent.com/mirayukiasura-alt/Aslanlar/main/"
     local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
     local ThemeManager = loadstring(game:HttpGet(repo .. "ThemeManager.lua"))()
@@ -11,17 +11,17 @@ if game.GameId == 4652005960 and getgenv().ASURA == true then
     local Toggles = Library.Toggles
 
     local Window = Library:CreateWindow({
-        Title = "Aslanlar Hub",
+        Title = "Aslanlar HUB",
         Footer = "Gofret Macro System",
         NotifySide = "Right",
         ShowCustomCursor = false,
     })
 
     local Tabs = {
-        Main = Window:AddTab("Main", "Main","Player"),
+        Main = Window:AddTab("Main", "Main", "Player"),
         ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
     }
-    local FarmBox = Tabs.Main:AddLeftGroupbox("MAIN")
+    local FarmBox = Tabs.Main:AddLeftGroupbox("MAIN CONTROL")
 
 getgenv().tool_table = {}
 getgenv().SelectedWeapon = nil
@@ -378,8 +378,8 @@ FarmBox:AddSlider("AutoHitWait", {
 	SaveManager:IgnoreThemeSettings()
 	SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
 
-	ThemeManager:SetFolder("AslanlarHub")
-	SaveManager:SetFolder("AslanlarHub/"..game.Name)
+	ThemeManager:SetFolder("GofretSystem/AslanlarHub")
+	SaveManager:SetFolder("GofretSystem/AslanlarHub/"..game.Name)
 	SaveManager:SetSubFolder(game.Name) 
 
 	SaveManager:BuildConfigSection(Tabs["UI Settings"])
