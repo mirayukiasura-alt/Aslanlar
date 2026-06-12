@@ -1,142 +1,44 @@
 getgenv().SHAMPO = true
 if game.GameId ~= 4652005960 then return end
 
+-- GitHub Reponuzdan Kütüphaneleri Güvenli Şekilde Çekme
 local repo = "https://raw.githubusercontent.com/mirayukiasura-alt/Aslanlar/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
+local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/addons/ThemeManager.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/addons/SaveManager.lua"))()
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local VIM = game:GetService("VirtualInputManager")
 local LP = Players.LocalPlayer
 
+-- CSS Tasarımındaki Yazılara Uygun Başlık Yapısı
 local Window = Library:CreateWindow({
-    Footer = "FREE MIRA · UNBAN MIRA YUKI",
+    Title = "AslanlarHUB",
+    Footer = "FREE MIRA | UNBAN MIRA YUKI",
+    NotifySide = "Right",
+    ShowCustomCursor = false
 })
 
--- HTML Yapındaki gibi 3 Sekme
+-- Kütüphanenin çökmemesi için string ikon parametreleriyle sekmeler
 local Tabs = {
     Main = Window:AddTab("Main"),
     Skills = Window:AddTab("Skills"),
     ["UI Settings"] = Window:AddTab("UI Settings"),
 }
 
--- Sol Sütun (Left) ve Sağ Sütun (Right) Yerleşimleri
+-- Grup Kutularının Oluşturulması
 local FarmBox = Tabs.Main:AddLeftGroupbox("Combat Tools")
 local NPCBox = Tabs.Main:AddRightGroupbox("NPC Filter")
 local AutoBox = Tabs.Main:AddRightGroupbox("Automation")
 
--- CSS Uyarı Etiketi (.warn-label) Entegrasyonu
-FarmBox:AddLabel("⚠ UNBAN MIRA YUKI ⚠", true)
+-- HTML Tasarımındaki Ortalanmış Özel Warn Label Yapısı
+FarmBox:AddLabel("⚠️ UNBAN MIRA YUKI ⚠️", true)
+FarmBox:AddLabel("📢 FREE MIRA 📢", true)
 FarmBox:AddDivider()
 
 --------------------------------------------------
--- NPC FILTER SYSTEM
---------------------------------------------------
-getgenv().NPCRange = 500
-getgenv().SelectedNPCs = {}
-
-NPCBox:AddSlider("NPCRangeSlider", {
-    Text = "Scan Range",
-    Min = 50,
-    Max = 5000,
-    Default = 500,
-    Callback = function(v) getgenv().NPCRange = v end
-})
-
-local npcDropdown = NPCBox:AddDropdown("NPCSelector", {
-    Values = {"Refresh list first"},
-    Text = "Target NPCs",
-    Multi = true,
-    Callback = function(v) getgenv().SelectedNPCs = v end
-})
-
-NPCBox:AddButton("🔄 Refresh NPC List", function()
-    local char = LP.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local mobs = workspace:FindFirstChild("Mobs")
-    if not hrp or not mobs then return end
-
-    local found = {}
-    local nameSet = {}
-    for _, m in pairs(mobs:GetChildren()) do
-        local mHrp = m:FindFirstChild("HumanoidRootPart")
-        local hum = m:FindFirstChildWhichIsA("Humanoid")
-        if mHrp and hum and hum.Health > 0 then
-            local dist = (hrp.Position - mHrp.Position).Magnitude
-            if dist <= getgenv().NPCRange and not nameSet[m.Name] then
-                nameSet[m.Name] = true
-                table.insert(found, m.Name)
-            end
-        end
-    end
-
-    if #found == 0 then Library:Notify("System", "No NPCs found in range") return end
-    table.sort(found)
-    npcDropdown:SetValues(found)
-    getgenv().SelectedNPCs = {}
-    Library:Notify("System", "NPC list updated")
-end)
-
-NPCBox:AddButton("Clear Selection", function()
-    getgenv().SelectedNPCs = {}
-    npcDropdown:SetValues({"Refresh list first"})
-    Library:Notify("System", "Selection cleared")
-end)
-
-local function isNPCAllowed(mob)
-    local hasSelection = false
-    for _ in pairs(getgenv().SelectedNPCs) do hasSelection = true break end
-    if not hasSelection then return true end
-    return getgenv().SelectedNPCs[mob.Name] == true
-end
-
-local function getClosestAllowedMobHrp()
-    local char = LP.Character
-    if not char then return nil end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local mobs = workspace:FindFirstChild("Mobs")
-    if not hrp or not mobs then return nil end
-
-    local closest, dist = nil, math.huge
-    for _, m in pairs(mobs:GetChildren()) do
-        local mHrp = m:FindFirstChild("HumanoidRootPart")
-        local hum = m:FindFirstChildWhichIsA("Humanoid")
-        if mHrp and hum and hum.Health > 0 and isNPCAllowed(m) then
-            local d = (hrp.Position - mHrp.Position).Magnitude
-            if d <= getgenv().NPCRange and d < dist then
-                dist = d
-                closest = mHrp
-            end
-        end
-    end
-    return closest
-end
-
-local function getClosestAllowedMobFull()
-    local char = LP.Character
-    if not char then return nil end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local mobs = workspace:FindFirstChild("Mobs")
-    if not hrp or not mobs then return nil end
-
-    local closest, dist = nil, math.huge
-    for _, m in pairs(mobs:GetChildren()) do
-        local mHrp = m:FindFirstChild("HumanoidRootPart")
-        local hum = m:FindFirstChildWhichIsA("Humanoid")
-        if mHrp and hum and hum.Health > 0 and isNPCAllowed(m) then
-            local d = (hrp.Position - mHrp.Position).Magnitude
-            if d <= getgenv().NPCRange and d < dist then
-                dist = d
-                closest = m
-            end
-        end
-    end
-    return closest
-end
-
---------------------------------------------------
--- TOOL SYSTEM
+-- COMBAT TOOLS (SOL SÜTUN)
 --------------------------------------------------
 getgenv().SelectedWeapon = nil
 getgenv().CombatWeapon = nil
@@ -151,31 +53,35 @@ local function fetchTools()
     return t
 end
 
-local toolDrop = FarmBox:AddDropdown("RoundTool", {
+local toolDrop = FarmBox:AddDropdown("RoundToolDropdown", {
     Values = fetchTools(),
+    Default = 1,
+    Multi = false,
     Text = "Round Tool",
     Callback = function(v) getgenv().SelectedWeapon = v end
 })
 
-local combatDrop = FarmBox:AddDropdown("CombatTool", {
+local combatDrop = FarmBox:AddDropdown("CombatToolDropdown", {
     Values = fetchTools(),
+    Default = 1,
+    Multi = false,
     Text = "Combat Tool",
     Callback = function(v) getgenv().CombatWeapon = v end
 })
 
-FarmBox:AddButton("Refresh Tools", function()
-    local tools = fetchTools()
-    toolDrop:SetValues(tools)
-    combatDrop:SetValues(tools)
-end)
+FarmBox:AddButton({
+    Text = "Refresh Tools",
+    Func = function()
+        local tools = fetchTools()
+        toolDrop:SetValues(tools)
+        combatDrop:SetValues(tools)
+    end
+})
 
---------------------------------------------------
--- SMART AUTO HIT
---------------------------------------------------
+FarmBox:AddDivider()
+
 local AutoHit = false
 local StopAt = 50
-getgenv().Height = -7
-getgenv().Attach = false
 
 task.spawn(function()
     while true do
@@ -197,22 +103,28 @@ task.spawn(function()
     end
 end)
 
-FarmBox:AddToggle("AutoHit", {Text = "Smart Auto Hit", Default = false, Callback = function(v) AutoHit = v end}):AddKeyPicker("AutoHitBind", {Default = "G", SyncToggleState = true})
+FarmBox:AddToggle("SmartAutoHit", {
+    Text = "Smart Auto Hit",
+    Default = false,
+    Callback = function(v) AutoHit = v end
+}):AddKeyPicker("AutoHitBind", { Default = "G", NoUI = false, Text = "Smart Auto Hit", SyncToggleState = true })
 
-FarmBox:AddSlider("StopPercent", {
-    Text = "Stop at %", 
-    Min = 0, 
-    Max = 100, 
-    Default = 50, 
+FarmBox:AddSlider("StopPercentSlider", {
+    Text = "Stop at %",
+    Min = 0,
+    Max = 100,
+    Default = 50,
+    Rounding = 0,
+    Compact = false,
     Callback = function(v) StopAt = v end
 })
 
 FarmBox:AddDivider()
 
---------------------------------------------------
--- TELEPORT ATTACH
---------------------------------------------------
-local AttachToggle = FarmBox:AddToggle("Attach", {
+getgenv().Height = -7
+getgenv().Attach = false
+
+FarmBox:AddToggle("AttachBackToggle", {
     Text = "Attach (Back)",
     Default = false,
     Callback = function(v)
@@ -233,12 +145,135 @@ local AttachToggle = FarmBox:AddToggle("Attach", {
             end
         end)
     end
+}):AddKeyPicker("AttachBind", { Default = "H", NoUI = false, Text = "Attach (Back)", SyncToggleState = true })
+
+FarmBox:AddSlider("HeightOffsetSlider", {
+    Text = "Height Offset",
+    Min = -10,
+    Max = 10,
+    Default = -7,
+    Rounding = 1,
+    Compact = false,
+    Callback = function(v) getgenv().Height = v end
 })
-AttachToggle:AddKeyPicker("AttachBind", {Default = "H", SyncToggleState = true})
-FarmBox:AddSlider("HeightVal", {Text = "Height Offset", Min = -10, Max = 10, Default = -7, Step = 0.5, Callback = function(v) getgenv().Height = v end})
 
 --------------------------------------------------
--- AUTOMATION MANTIKLARI
+-- NPC FILTER (SAĞ SÜTUN)
+--------------------------------------------------
+getgenv().NPCRange = 500
+getgenv().SelectedNPCs = {}
+
+NPCBox:AddSlider("ScanRangeSlider", {
+    Text = "Scan Range",
+    Min = 50,
+    Max = 5000,
+    Default = 500,
+    Rounding = 0,
+    Compact = false,
+    Callback = function(v) getgenv().NPCRange = v end
+})
+
+local npcDropdown = NPCBox:AddDropdown("TargetNPCDropdown", {
+    Values = {"(Refresh first)"},
+    Default = 1,
+    Multi = true,
+    Text = "Target NPCs",
+    Callback = function(v) getgenv().SelectedNPCs = v end
+})
+
+function getClosestAllowedMobHrp()
+    local char = LP.Character
+    if not char then return nil end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local mobs = workspace:FindFirstChild("Mobs")
+    if not hrp or not mobs then return nil end
+
+    local closest, dist = nil, math.huge
+    for _, m in pairs(mobs:GetChildren()) do
+        local mHrp = m:FindFirstChild("HumanoidRootPart")
+        local hum = m:FindFirstChildWhichIsA("Humanoid")
+        if mHrp and hum and hum.Health > 0 then
+            local hasSelection = false
+            for _ in pairs(getgenv().SelectedNPCs) do hasSelection = true break end
+            
+            if not hasSelection or getgenv().SelectedNPCs[m.Name] then
+                local d = (hrp.Position - mHrp.Position).Magnitude
+                if d <= getgenv().NPCRange and d < dist then
+                    dist = d
+                    closest = mHrp
+                end
+            end
+        end
+    end
+    return closest
+end
+
+function getClosestAllowedMobFull()
+    local char = LP.Character
+    if not char then return nil end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local mobs = workspace:FindFirstChild("Mobs")
+    if not hrp or not mobs then return nil end
+
+    local closest, dist = nil, math.huge
+    for _, m in pairs(mobs:GetChildren()) do
+        local mHrp = m:FindFirstChild("HumanoidRootPart")
+        local hum = m:FindFirstChildWhichIsA("Humanoid")
+        if mHrp and hum and hum.Health > 0 then
+            local hasSelection = false
+            for _ in pairs(getgenv().SelectedNPCs) do hasSelection = true break end
+            
+            if not hasSelection or getgenv().SelectedNPCs[m.Name] then
+                local d = (hrp.Position - mHrp.Position).Magnitude
+                if d <= getgenv().NPCRange and d < dist then
+                    dist = d
+                    closest = m
+                end
+            end
+        end
+    end
+    return closest
+end
+
+NPCBox:AddButton({
+    Text = "🔄 Refresh NPC List",
+    Func = function()
+        local char = LP.Character
+        if not char then return end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local mobs = workspace:FindFirstChild("Mobs")
+        if not hrp or not mobs then return end
+
+        local found = {}
+        local nameSet = {}
+        for _, m in pairs(mobs:GetChildren()) do
+            local mHrp = m:FindFirstChild("HumanoidRootPart")
+            if mHrp then
+                local dist = (hrp.Position - mHrp.Position).Magnitude
+                if dist <= getgenv().NPCRange and not nameSet[m.Name] then
+                    nameSet[m.Name] = true
+                    table.insert(found, m.Name)
+                end
+            end
+        end
+
+        if #found == 0 then Library:Notify("No NPCs found in range") return end
+        table.sort(found)
+        npcDropdown:SetValues(found)
+        getgenv().SelectedNPCs = {}
+    end
+})
+
+NPCBox:AddButton({
+    Text = "Clear Selection",
+    Func = function()
+        getgenv().SelectedNPCs = {}
+        npcDropdown:SetValues({"(Refresh first)"})
+    end
+})
+
+--------------------------------------------------
+-- AUTOMATION (SAĞ SÜTUN - ALT)
 --------------------------------------------------
 local UseEachRound = false
 local UsedThisRound = false
@@ -303,15 +338,22 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
-AutoBox:AddToggle("RoundToggle", {Text = "Use Tool Each Round", Default = false, Callback = function(v) UseEachRound = v; UsedThisRound = false end})
+AutoBox:AddToggle("UseToolEachRoundToggle", {
+    Text = "Use Tool Each Round",
+    Default = false,
+    Callback = function(v) UseEachRound = v; UsedThisRound = false end
+})
 
-local ProceedToggle = AutoBox:AddToggle("AutoProceed", {Text = "Auto Proceed Stage", Default = false, Callback = function(v) AutoProceed = v end})
-ProceedToggle:AddKeyPicker("ProceedBind", {Default = "Z", SyncToggleState = true})
+AutoBox:AddToggle("AutoProceedStageToggle", {
+    Text = "Auto Proceed Stage",
+    Default = false,
+    Callback = function(v) AutoProceed = v end
+}):AddKeyPicker("ProceedBind", { Default = "Z", NoUI = false, Text = "Auto Proceed Stage", SyncToggleState = true })
 
 AutoBox:AddDivider()
 
 --------------------------------------------------
--- SKILL DATABASE & ROTATION
+-- SKILLS TAB (ROTASYON SİSTEMİ)
 --------------------------------------------------
 local MasterSkillList = {
     {Name = "Jinrai Kicks",      CD = 33,   Type = "Normal",   Style = "Karate"},
@@ -354,8 +396,8 @@ getgenv().SkillDelay = 6
 getgenv().SkillInterval = 3
 getgenv().AutoSkillActive = false
 
-SkillConfigBox:AddSlider("SkillDelaySlider", {Text = "Start Delay", Min = 0, Max = 15, Default = 6, Callback = function(v) getgenv().SkillDelay = v end})
-SkillConfigBox:AddSlider("SkillIntervalSlider", {Text = "Skill Interval", Min = 1, Max = 10, Default = 3, Callback = function(v) getgenv().SkillInterval = v end})
+SkillConfigBox:AddSlider("SkillDelaySlider", {Text = "Start Delay", Min = 0, Max = 15, Default = 6, Rounding = 0, Callback = function(v) getgenv().SkillDelay = v end})
+SkillConfigBox:AddSlider("SkillIntervalSlider", {Text = "Skill Interval", Min = 1, Max = 10, Default = 3, Rounding = 0, Callback = function(v) getgenv().SkillInterval = v end})
 
 local DetectedSkills = {}
 local SkillTimers = {}
@@ -369,12 +411,12 @@ local function ResetCooldowns()
 end
 
 local function DetectOwnedSkills()
-    local backpack = LP:FindFirstChild("Backpack")
-    if not backpack then return end
-    
     DetectedSkills = {}
     TotalNormalSkills = 0
-    Library:Notify("System", "Scanning tools...")
+    Library:Notify("Scanning tools...")
+
+    local backpack = LP:FindFirstChild("Backpack")
+    if not backpack then return end
 
     for _, tool in pairs(backpack:GetChildren()) do
         if tool:IsA("Tool") then
@@ -389,20 +431,20 @@ local function DetectOwnedSkills()
         end
     end
 
-    Library:Notify("System", "Found " .. #DetectedSkills .. " skills!")
+    Library:Notify("Found " .. #DetectedSkills .. " skills!")
 
     for styleName, box in pairs(StyleBoxes) do
-        box:AddLabel("--- Detected ---", false)
+        box:AddLabel("--- Detected ---")
         for _, skill in pairs(DetectedSkills) do
             if skill.Style == styleName then
                 local tag = skill.Type == "Ultimate" and " [ULT]" or " [N]"
-                box:AddLabel(skill.Name .. " (" .. skill.CD .. "s)" .. tag, false)
+                box:AddLabel("• " .. skill.Name .. " (" .. skill.CD .. "s)" .. tag)
             end
         end
     end
 end
 
-SkillConfigBox:AddButton("1. Detect Owned Skills", DetectOwnedSkills)
+SkillConfigBox:AddButton({Text = "1. Detect Owned Skills", Func = DetectOwnedSkills})
 
 local function CanUseSkill(skillData)
     local lastUsed = SkillTimers[skillData.Name] or 0
@@ -430,7 +472,7 @@ local function CastSkill(skillData)
     return true
 end
 
-local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
+AutoBox:AddToggle("AutoSkillMasterToggle", {
     Text = "Start Smart Rotation",
     Default = false,
     Callback = function(v)
@@ -492,26 +534,39 @@ local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
             end
         end)
     end
-})
-SkillToggle:AddKeyPicker("SkillBind", {Default = "T", SyncToggleState = true})
+}):AddKeyPicker("SkillBind", { Default = "T", NoUI = false, Text = "Start Smart Rotation", SyncToggleState = true })
 
 --------------------------------------------------
--- UI SETTINGS & THEMES
+-- UI SETTINGS & MANAGERS
 --------------------------------------------------
-local MenuBox = Tabs["UI Settings"]:AddLeftGroupbox("Menu Settings")
-local ThemeBox = Tabs["UI Settings"]:AddRightGroupbox("Theme")
+local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu Settings")
 
-MenuBox:AddDropdown("DPIDropdown", {
-    Values = {"50%", "75%", "100%", "125%", "150%", "175%", "200%"},
+MenuGroup:AddDropdown("DPIDropdown", {
+    Values = { "50%", "75%", "100%", "125%", "150%", "175%", "200%" },
+    Default = "100%",
     Text = "DPI Scale",
-    Callback = function(v) end
+    Callback = function(Value)
+        Value = Value:gsub("%%", "")
+        local DPI = tonumber(Value)
+        Library:SetDPIScale(DPI)
+    end,
 })
-MenuBox:AddLabel("Menu Keybind")
-MenuBox:AddButton("Unload Script", function() Library:Unload() end)
+MenuGroup:AddDivider()
+MenuGroup:AddLabel("Menu bind"):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu keybind", ChangedCallback = function(New) Library.ToggleKeybind = New end})
 
-ThemeBox:AddButton("Save Config", function() Library:Notify("Config", "Saved successfully") end)
-ThemeBox:AddButton("Load Config", function() Library:Notify("Config", "Loaded successfully") end)
-ThemeBox:AddButton("Autoload", function() Library:Notify("Config", "Autoload enabled") end)
+MenuGroup:AddButton("Unload Script", function() Library:Unload() end)
+
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
+
+ThemeManager:SetFolder("GofretSystem/AslanlarHub")
+SaveManager:SetFolder("GofretSystem/AslanlarHub/" .. game.Name)
+SaveManager:SetSubFolder(game.Name)
+
+SaveManager:BuildConfigSection(Tabs["UI Settings"])
+ThemeManager:ApplyToTab(Tabs["UI Settings"])
 
 Library.ToggleKeybind = Enum.KeyCode.RightShift
-Library:Toggle()
