@@ -35,7 +35,7 @@ FarmBox:AddDivider()
 -- NPC FILTER SYSTEM
 --------------------------------------------------
 getgenv().NPCRange = 500
-getgenv().SelectedNPCs = {}  -- seçili NPC isimleri
+getgenv().SelectedNPCs = {}
 
 local NPCBox = Tabs.Main:AddLeftGroupbox("NPC Filter")
 
@@ -44,33 +44,22 @@ NPCBox:AddSlider("NPCRangeSlider", {
     Min = 50,
     Max = 5000,
     Default = 500,
-    Callback = function(v)
-        getgenv().NPCRange = v
-    end
+    Callback = function(v) getgenv().NPCRange = v end
 })
 
--- NPC listesi için dropdown (multi-select)
 local npcDropdown = NPCBox:AddDropdown("NPCSelector", {
     Values = {"(Refresh first)"},
     Text = "Select Target NPCs",
     Multi = true,
-    Callback = function(v)
-        getgenv().SelectedNPCs = v
-    end
+    Callback = function(v) getgenv().SelectedNPCs = v end
 })
 
 NPCBox:AddButton("🔄 Refresh NPC List", function()
     local char = LP.Character
-    if not char then
-        Library:Notify("Error", "No character found!")
-        return
-    end
+    if not char then Library:Notify("Error", "No character found!") return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     local mobs = workspace:FindFirstChild("Mobs")
-    if not hrp or not mobs then
-        Library:Notify("Error", "No Mobs folder found!")
-        return
-    end
+    if not hrp or not mobs then Library:Notify("Error", "No Mobs folder found!") return end
 
     local found = {}
     local nameSet = {}
@@ -79,20 +68,14 @@ NPCBox:AddButton("🔄 Refresh NPC List", function()
         local hum = m:FindFirstChildWhichIsA("Humanoid")
         if mHrp and hum and hum.Health > 0 then
             local dist = (hrp.Position - mHrp.Position).Magnitude
-            if dist <= getgenv().NPCRange then
-                if not nameSet[m.Name] then
-                    nameSet[m.Name] = true
-                    table.insert(found, m.Name)
-                end
+            if dist <= getgenv().NPCRange and not nameSet[m.Name] then
+                nameSet[m.Name] = true
+                table.insert(found, m.Name)
             end
         end
     end
 
-    if #found == 0 then
-        Library:Notify("NPC Scan", "No NPCs found in range!")
-        return
-    end
-
+    if #found == 0 then Library:Notify("NPC Scan", "No NPCs found in range!") return end
     table.sort(found)
     npcDropdown:SetValues(found)
     getgenv().SelectedNPCs = {}
@@ -104,6 +87,60 @@ NPCBox:AddButton("Clear Selection", function()
     npcDropdown:SetValues({"(Refresh first)"})
     Library:Notify("NPC Filter", "Selection cleared!")
 end)
+
+--------------------------------------------------
+-- NPC ALLOWED CHECK
+--------------------------------------------------
+local function isNPCAllowed(mob)
+    local hasSelection = false
+    for _ in pairs(getgenv().SelectedNPCs) do hasSelection = true break end
+    if not hasSelection then return true end
+    return getgenv().SelectedNPCs[mob.Name] == true
+end
+
+local function getClosestAllowedMob()
+    local char = LP.Character
+    if not char then return nil end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local mobs = workspace:FindFirstChild("Mobs")
+    if not hrp or not mobs then return nil end
+
+    local closest, dist = nil, math.huge
+    for _, m in pairs(mobs:GetChildren()) do
+        local mHrp = m:FindFirstChild("HumanoidRootPart")
+        local hum = m:FindFirstChildWhichIsA("Humanoid")
+        if mHrp and hum and hum.Health > 0 and isNPCAllowed(m) then
+            local d = (hrp.Position - mHrp.Position).Magnitude
+            if d <= getgenv().NPCRange and d < dist then
+                dist = d
+                closest = mHrp
+            end
+        end
+    end
+    return closest
+end
+
+local function getClosestAllowedMobFull()
+    local char = LP.Character
+    if not char then return nil end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local mobs = workspace:FindFirstChild("Mobs")
+    if not hrp or not mobs then return nil end
+
+    local closest, dist = nil, math.huge
+    for _, m in pairs(mobs:GetChildren()) do
+        local mHrp = m:FindFirstChild("HumanoidRootPart")
+        local hum = m:FindFirstChildWhichIsA("Humanoid")
+        if mHrp and hum and hum.Health > 0 and isNPCAllowed(m) then
+            local d = (hrp.Position - mHrp.Position).Magnitude
+            if d <= getgenv().NPCRange and d < dist then
+                dist = d
+                closest = m
+            end
+        end
+    end
+    return closest
+end
 
 --------------------------------------------------
 -- TOOL SYSTEM
@@ -169,46 +206,11 @@ end)
 
 local HitToggle = FarmBox:AddToggle("AutoHit", {Text = "Smart Auto Hit", Default = false, Callback = function(v) AutoHit = v end})
 HitToggle:AddKeyPicker("AutoHitBind", {Default = "G", NoUI = false, Text = "Auto Hit", SyncToggleState = true})
-
 FarmBox:AddSlider("StopPercent", {Text = "Stop at %", Min = 0, Max = 100, Default = 50, Callback = function(v) StopAt = v end})
 
 --------------------------------------------------
--- ATTACH (NPC FİLTRELİ)
+-- ATTACH
 --------------------------------------------------
-local function isNPCAllowed(mob)
-    -- Hiç seçim yapılmamışsa hepsine git (eski davranış)
-    local hasSelection = false
-    for _ in pairs(getgenv().SelectedNPCs) do
-        hasSelection = true
-        break
-    end
-    if not hasSelection then return true end
-    -- Seçili isimlerden biri eşleşiyor mu
-    return getgenv().SelectedNPCs[mob.Name] == true
-end
-
-local function getClosestAllowedMob()
-    local char = LP.Character
-    if not char then return nil end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local mobs = workspace:FindFirstChild("Mobs")
-    if not hrp or not mobs then return nil end
-
-    local closest, dist = nil, math.huge
-    for _, m in pairs(mobs:GetChildren()) do
-        local mHrp = m:FindFirstChild("HumanoidRootPart")
-        local hum = m:FindFirstChildWhichIsA("Humanoid")
-        if mHrp and hum and hum.Health > 0 and isNPCAllowed(m) then
-            local d = (hrp.Position - mHrp.Position).Magnitude
-            if d <= getgenv().NPCRange and d < dist then
-                dist = d
-                closest = mHrp
-            end
-        end
-    end
-    return closest
-end
-
 local AttachToggle = FarmBox:AddToggle("Attach", {
     Text = "Attach (Back)",
     Default = false,
@@ -222,7 +224,6 @@ local AttachToggle = FarmBox:AddToggle("Attach", {
             if not char or not getgenv().Attach then return end
             local hrp = char:FindFirstChild("HumanoidRootPart")
             if not hrp then return end
-
             local closest = getClosestAllowedMob()
             if closest then
                 local pos = closest.Position + closest.CFrame.LookVector * -2.5 + Vector3.new(0, getgenv().Height, 0)
@@ -233,6 +234,102 @@ local AttachToggle = FarmBox:AddToggle("Attach", {
 })
 AttachToggle:AddKeyPicker("AttachBind", {Default = "H", NoUI = false, Text = "Attach", SyncToggleState = true})
 FarmBox:AddSlider("HeightVal", {Text = "Height Offset", Min = -10, Max = 10, Default = -6.5, Callback = function(v) getgenv().Height = v end})
+
+--------------------------------------------------
+-- VOID GRAB SYSTEM
+--------------------------------------------------
+local VoidGrabActive = false
+getgenv().VoidY_NPC = -520   -- NPC bu Y'ye ışınlanır (void'e düşer)
+getgenv().VoidY_Safe = -480
+getgenv().VoidWaitTime = 1.5  -- Sen bu Y'de durursun (güvenli)
+
+local VoidBox = Tabs.Main:AddRightGroupbox("Void Grab")
+
+VoidBox:AddLabel("Shoulder Throw ile NPC voidler", false)
+
+local VoidToggle = VoidBox:AddToggle("VoidGrabToggle", {
+    Text = "Void Grab",
+    Default = false,
+    Callback = function(v) VoidGrabActive = v end
+})
+VoidToggle:AddKeyPicker("VoidBind", {Default = "V", NoUI = false, Text = "Void Grab", SyncToggleState = true})
+
+VoidBox:AddSlider("VoidNPCY", {
+    Text = "NPC Void Y",
+    Min = -1000,
+    Max = -480,
+    Default = -520,
+    Callback = function(v) getgenv().VoidY_NPC = v end
+})
+
+VoidBox:AddSlider("VoidSafeY", {
+    Text = "Safe Y (senin)",
+    Min = -479,
+    Max = 0,
+    Default = -480,
+    Callback = function(v) getgenv().VoidY_Safe = v end
+})
+
+VoidBox:AddSlider("VoidWaitSlider", {
+    Text = "Wait Time (s)",
+    Min = 0.5,
+    Max = 5,
+    Default = 1.5,
+    Callback = function(v) getgenv().VoidWaitTime = v end
+})
+
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+        if VoidGrabActive then
+            local char = LP.Character
+            if not char then task.wait(1) continue end
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if not hrp then task.wait(1) continue end
+
+            local mob = getClosestAllowedMobFull()
+            if not mob then task.wait(1) continue end
+            local mobHrp = mob:FindFirstChild("HumanoidRootPart")
+            if not mobHrp then task.wait(1) continue end
+
+            -- Shoulder Throw yap
+            local backpack = LP.Backpack
+            local grabTool = backpack:FindFirstChild("Shoulder Throw")
+            if not grabTool then task.wait(1) continue end
+
+            -- Mevcut pozisyonu kaydet
+            local savedPos = hrp.CFrame
+
+            -- Shoulder Throw kullan
+            char.Humanoid:EquipTool(grabTool)
+            task.wait(0.15)
+            VIM:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+            VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+            task.wait(0.3)
+
+            -- NPC ve karakteri void pozisyonuna ışınla
+            local voidPos = Vector3.new(mobHrp.Position.X, getgenv().VoidY_NPC, mobHrp.Position.Z)
+            local safePos = Vector3.new(hrp.Position.X, getgenv().VoidY_Safe, hrp.Position.Z)
+
+            mobHrp.CFrame = CFrame.new(voidPos)
+            hrp.CFrame = CFrame.new(safePos)
+
+            -- Animasyon bitene kadar bekle
+            task.wait(getgenv().VoidWaitTime)
+
+            -- Eski pozisyona dön
+            hrp.CFrame = savedPos
+
+            -- Combat weapon'a geri dön
+            if getgenv().CombatWeapon then
+                local cTool = backpack:FindFirstChild(getgenv().CombatWeapon)
+                if cTool then char.Humanoid:EquipTool(cTool) end
+            end
+
+            task.wait(1)
+        end
+    end
+end)
 
 --------------------------------------------------
 -- AUTOMATION
@@ -283,12 +380,10 @@ RunService.Heartbeat:Connect(function()
         if mobs then
             for _, m in pairs(mobs:GetChildren()) do
                 if m:FindFirstChildWhichIsA("Humanoid") and m.Humanoid.Health > 0 then
-                    alive = true
-                    break
+                    alive = true break
                 end
             end
         end
-
         if alive and not UsedThisRound then
             UsedThisRound = true
             task.delay(5, function()
@@ -301,107 +396,104 @@ RunService.Heartbeat:Connect(function()
 end)
 
 AutoBox:AddToggle("RoundToggle", {Text = "Use Tool Each Round", Default = false, Callback = function(v) UseEachRound = v; UsedThisRound = false end})
-
 local ProceedToggle = AutoBox:AddToggle("AutoProceed", {Text = "Auto Proceed Stage", Default = false, Callback = function(v) AutoProceed = v end})
 ProceedToggle:AddKeyPicker("ProceedBind", {Default = "Z", NoUI = false, Text = "Auto Proceed", SyncToggleState = true})
 
 --------------------------------------------------
--- SKILL DATABASE
+-- SKILL DATABASE + TOGGLE SİSTEMİ
 --------------------------------------------------
 local MasterSkillList = {
     -- Karate
-    {Name = "Jinrai Kicks",      CD = 33,   Type = "Normal",   Style = "Karate"},
-    {Name = "Controlled punch",  CD = 28,   Type = "Normal",   Style = "Karate"},
-    {Name = "Roundhouse Kick",   CD = 28,   Type = "Normal",   Style = "Karate"},
-    {Name = "Side kick",         CD = 23,   Type = "Normal",   Style = "Karate"},
-    {Name = "High kick",         CD = 22.9, Type = "Normal",   Style = "Karate"},
-    {Name = "Devil Strike",      CD = 50,   Type = "Ultimate", Style = "Karate"},
+    {Name = "Jinrai Kicks",         CD = 33,   Type = "Normal",   Style = "Karate"},
+    {Name = "Controlled punch",     CD = 28,   Type = "Normal",   Style = "Karate"},
+    {Name = "Roundhouse Kick",      CD = 28,   Type = "Normal",   Style = "Karate"},
+    {Name = "Side kick",            CD = 23,   Type = "Normal",   Style = "Karate"},
+    {Name = "High kick",            CD = 22.9, Type = "Normal",   Style = "Karate"},
+    {Name = "Devil Strike",         CD = 50,   Type = "Ultimate", Style = "Karate"},
     -- Boxing
-    {Name = "Tri-Jab",           CD = 13,   Type = "Normal",   Style = "Boxing"},
-    {Name = "Gazelle Punch",     CD = 18,   Type = "Normal",   Style = "Boxing"},
-    {Name = "Liver Blow",        CD = 23,   Type = "Normal",   Style = "Boxing"},
-    {Name = "White Fang",        CD = 23,   Type = "Normal",   Style = "Boxing"},
-    {Name = "Corkscrew",         CD = 17.9, Type = "Normal",   Style = "Boxing"},
-    {Name = "Gatling Knockout",  CD = 50,   Type = "Ultimate", Style = "Boxing"},
+    {Name = "Tri-Jab",              CD = 13,   Type = "Normal",   Style = "Boxing"},
+    {Name = "Gazelle Punch",        CD = 18,   Type = "Normal",   Style = "Boxing"},
+    {Name = "Liver Blow",           CD = 23,   Type = "Normal",   Style = "Boxing"},
+    {Name = "White Fang",           CD = 23,   Type = "Normal",   Style = "Boxing"},
+    {Name = "Corkscrew",            CD = 17.9, Type = "Normal",   Style = "Boxing"},
+    {Name = "Gatling Knockout",     CD = 50,   Type = "Ultimate", Style = "Boxing"},
     -- Taekwondo
-    {Name = "King's Horse",      CD = 33,   Type = "Normal",   Style = "Taekwondo"},
-    {Name = "540 Kick",          CD = 33,   Type = "Normal",   Style = "Taekwondo"},
-    {Name = "Slam Dunk",         CD = 43,   Type = "Normal",   Style = "Taekwondo"},
-    {Name = "Jumping Roundhouse",CD = 28,   Type = "Normal",   Style = "Taekwondo"},
-    {Name = "Temple Hook Kick",  CD = 27.8, Type = "Normal",   Style = "Taekwondo"},
-    {Name = "Axe Rampage",       CD = 50,   Type = "Ultimate", Style = "Taekwondo"},
+    {Name = "King's Horse",         CD = 33,   Type = "Normal",   Style = "Taekwondo"},
+    {Name = "540 Kick",             CD = 33,   Type = "Normal",   Style = "Taekwondo"},
+    {Name = "Slam Dunk",            CD = 43,   Type = "Normal",   Style = "Taekwondo"},
+    {Name = "Jumping Roundhouse",   CD = 28,   Type = "Normal",   Style = "Taekwondo"},
+    {Name = "Temple Hook Kick",     CD = 27.8, Type = "Normal",   Style = "Taekwondo"},
+    {Name = "Axe Rampage",          CD = 50,   Type = "Ultimate", Style = "Taekwondo"},
     -- Capoeira
-    {Name = "Roundabout",        CD = 22,   Type = "Normal",   Style = "Capoeira"},
-    {Name = "Drill Kick",        CD = 28,   Type = "Normal",   Style = "Capoeira"},
-    {Name = "Rolling Axe",       CD = 16,   Type = "Normal",   Style = "Capoeira"},
-    {Name = "Crouching Roundhouse", CD = 21, Type = "Normal",  Style = "Capoeira"},
-    {Name = "Sweeping Round Hook", CD = 28, Type = "Normal",   Style = "Capoeira"},
-    {Name = "Tinta Tempo",       CD = 50,   Type = "Ultimate", Style = "Capoeira"},
+    {Name = "Roundabout",           CD = 22,   Type = "Normal",   Style = "Capoeira"},
+    {Name = "Drill Kick",           CD = 28,   Type = "Normal",   Style = "Capoeira"},
+    {Name = "Rolling Axe",          CD = 16,   Type = "Normal",   Style = "Capoeira"},
+    {Name = "Crouching Roundhouse", CD = 21,   Type = "Normal",   Style = "Capoeira"},
+    {Name = "Sweeping Round Hook",  CD = 28,   Type = "Normal",   Style = "Capoeira"},
+    {Name = "Tinta Tempo",          CD = 50,   Type = "Ultimate", Style = "Capoeira"},
     -- Judo
-    {Name = "Lariat Counter",    CD = 26,   Type = "Normal",   Style = "Judo"},
-    {Name = "Sweep Takedown",    CD = 18,   Type = "Normal",   Style = "Judo"},
-    {Name = "Lotus Crash",       CD = 17.2, Type = "Normal",   Style = "Judo"},
-    {Name = "Shoulder Throw",    CD = 27.2, Type = "Normal",   Style = "Judo"},
-    {Name = "Demon Grip",        CD = 50,   Type = "Ultimate", Style = "Judo"},
+    {Name = "Lariat Counter",       CD = 26,   Type = "Normal",   Style = "Judo"},
+    {Name = "Sweep Takedown",       CD = 18,   Type = "Normal",   Style = "Judo"},
+    {Name = "Lotus Crash",          CD = 17.2, Type = "Normal",   Style = "Judo"},
+    {Name = "Shoulder Throw",       CD = 27.2, Type = "Normal",   Style = "Judo", IsGrab = true},
+    {Name = "Demon Grip",           CD = 50,   Type = "Ultimate", Style = "Judo"},
     -- Kung Fu
-    {Name = "Dragon Kick",       CD = 27.9, Type = "Normal",   Style = "Kung Fu"},
-    {Name = "Tiger Hunt",        CD = 28,   Type = "Normal",   Style = "Kung Fu"},
-    {Name = "Fajin",             CD = 28,   Type = "Normal",   Style = "Kung Fu"},
-    {Name = "Shadowless Kick",   CD = 22.9, Type = "Normal",   Style = "Kung Fu"},
-    {Name = "Palm Strike",       CD = 25,   Type = "Normal",   Style = "Kung Fu"},
-    {Name = "1000 Deaths",       CD = 60,   Type = "Ultimate", Style = "Kung Fu"},
+    {Name = "Dragon Kick",          CD = 27.9, Type = "Normal",   Style = "Kung Fu"},
+    {Name = "Tiger Hunt",           CD = 28,   Type = "Normal",   Style = "Kung Fu"},
+    {Name = "Fajin",                CD = 28,   Type = "Normal",   Style = "Kung Fu"},
+    {Name = "Shadowless Kick",      CD = 22.9, Type = "Normal",   Style = "Kung Fu"},
+    {Name = "Palm Strike",          CD = 25,   Type = "Normal",   Style = "Kung Fu"},
+    {Name = "1000 Deaths",          CD = 60,   Type = "Ultimate", Style = "Kung Fu"},
     -- Muay Thai
-    {Name = "Cartwheel Kick",    CD = 23,   Type = "Normal",   Style = "Muay Thai"},
-    {Name = "Hammer of Burma",   CD = 28,   Type = "Normal",   Style = "Muay Thai"},
-    {Name = "Flying Knee",       CD = 23,   Type = "Normal",   Style = "Muay Thai"},
-    {Name = "Spinning Elbow",    CD = 27.9, Type = "Normal",   Style = "Muay Thai"},
-    {Name = "Falling Elbow",     CD = 23,   Type = "Normal",   Style = "Muay Thai"},
-    {Name = "Raging Flame",      CD = 60,   Type = "Ultimate", Style = "Muay Thai"},
+    {Name = "Cartwheel Kick",       CD = 23,   Type = "Normal",   Style = "Muay Thai"},
+    {Name = "Hammer of Burma",      CD = 28,   Type = "Normal",   Style = "Muay Thai"},
+    {Name = "Flying Knee",          CD = 23,   Type = "Normal",   Style = "Muay Thai"},
+    {Name = "Spinning Elbow",       CD = 27.9, Type = "Normal",   Style = "Muay Thai"},
+    {Name = "Falling Elbow",        CD = 23,   Type = "Normal",   Style = "Muay Thai"},
+    {Name = "Raging Flame",         CD = 60,   Type = "Ultimate", Style = "Muay Thai"},
     -- Wrestling
-    {Name = "Dropkick",          CD = 18,   Type = "Normal",   Style = "Wrestling"},
-    {Name = "Flash Suplex",      CD = 22,   Type = "Normal",   Style = "Wrestling"},
-    {Name = "Back Breaker",      CD = 28,   Type = "Normal",   Style = "Wrestling"},
-    {Name = "Head Smasher",      CD = 15,   Type = "Normal",   Style = "Wrestling"},
-    {Name = "Spinning Lariat",   CD = 25,   Type = "Normal",   Style = "Wrestling"},
-    {Name = "Unstoppable Force", CD = 60,   Type = "Ultimate", Style = "Wrestling"},
+    {Name = "Dropkick",             CD = 18,   Type = "Normal",   Style = "Wrestling"},
+    {Name = "Flash Suplex",         CD = 22,   Type = "Normal",   Style = "Wrestling"},
+    {Name = "Back Breaker",         CD = 28,   Type = "Normal",   Style = "Wrestling"},
+    {Name = "Head Smasher",         CD = 15,   Type = "Normal",   Style = "Wrestling"},
+    {Name = "Spinning Lariat",      CD = 25,   Type = "Normal",   Style = "Wrestling"},
+    {Name = "Unstoppable Force",    CD = 60,   Type = "Ultimate", Style = "Wrestling"},
     -- Sumo
-    {Name = "Hundred Palms",     CD = 16,   Type = "Normal",   Style = "Sumo"},
-    {Name = "Yaguranage",        CD = 28,   Type = "Normal",   Style = "Sumo"},
-    {Name = "Sumo Rush",         CD = 20,   Type = "Normal",   Style = "Sumo"},
-    {Name = "Body Slam",         CD = 23,   Type = "Normal",   Style = "Sumo"},
-    {Name = "Bear Hug",          CD = 30,   Type = "Normal",   Style = "Sumo"},
-    {Name = "Haymaker",          CD = 60,   Type = "Ultimate", Style = "Sumo"},
+    {Name = "Hundred Palms",        CD = 16,   Type = "Normal",   Style = "Sumo"},
+    {Name = "Yaguranage",           CD = 28,   Type = "Normal",   Style = "Sumo"},
+    {Name = "Sumo Rush",            CD = 20,   Type = "Normal",   Style = "Sumo"},
+    {Name = "Body Slam",            CD = 23,   Type = "Normal",   Style = "Sumo"},
+    {Name = "Bear Hug",             CD = 30,   Type = "Normal",   Style = "Sumo"},
+    {Name = "Haymaker",             CD = 60,   Type = "Ultimate", Style = "Sumo"},
     -- Beast
-    {Name = "Beast Launch",      CD = 20,   Type = "Normal",   Style = "Beast"},
-    {Name = "Tiger Slam",        CD = 28,   Type = "Normal",   Style = "Beast"},
-    {Name = "Ground Quake",      CD = 33,   Type = "Normal",   Style = "Beast"},
-    {Name = "Beast Claw",        CD = 18,   Type = "Normal",   Style = "Beast"},
-    {Name = "Pure Power",        CD = 60,   Type = "Ultimate", Style = "Beast"},
+    {Name = "Beast Launch",         CD = 20,   Type = "Normal",   Style = "Beast"},
+    {Name = "Tiger Slam",           CD = 28,   Type = "Normal",   Style = "Beast"},
+    {Name = "Ground Quake",         CD = 33,   Type = "Normal",   Style = "Beast"},
+    {Name = "Beast Claw",           CD = 18,   Type = "Normal",   Style = "Beast"},
+    {Name = "Pure Power",           CD = 60,   Type = "Ultimate", Style = "Beast"},
     -- Koei
-    {Name = "Blink",             CD = 15,   Type = "Normal",   Style = "Koei"},
-    {Name = "Twin Rakashasa's",  CD = 25,   Type = "Normal",   Style = "Koei"},
-    {Name = "Rakashasa's Sole",  CD = 22,   Type = "Normal",   Style = "Koei"},
-    {Name = "Beautiful Beast",   CD = 60,   Type = "Ultimate", Style = "Koei"},
+    {Name = "Blink",                CD = 15,   Type = "Normal",   Style = "Koei"},
+    {Name = "Twin Rakashasa's",     CD = 25,   Type = "Normal",   Style = "Koei"},
+    {Name = "Rakashasa's Sole",     CD = 22,   Type = "Normal",   Style = "Koei"},
+    {Name = "Beautiful Beast",      CD = 60,   Type = "Ultimate", Style = "Koei"},
 }
+
+-- Her skill için enabled durumu (default: hepsi açık)
+local SkillEnabled = {}
+for _, skill in pairs(MasterSkillList) do
+    SkillEnabled[skill.Name] = true
+end
 
 local StyleNames = {"Karate", "Boxing", "Taekwondo", "Capoeira", "Judo", "Kung Fu", "Muay Thai", "Wrestling", "Sumo", "Beast", "Koei"}
 
+--------------------------------------------------
+-- SKILL TAB
+--------------------------------------------------
 local SkillSettings = Tabs.Skills:AddLeftGroupbox("Settings")
 
 SkillSettings:AddLabel("⚔️ UNBAN MIRA YUKI ⚔️", true)
 SkillSettings:AddLabel("📢 FREE MIRA 📢", true)
 SkillSettings:AddDivider()
-
-local StyleBoxes = {}
-
-for i, styleName in ipairs(StyleNames) do
-    if i <= 6 then
-        StyleBoxes[styleName] = Tabs.Skills:AddRightGroupbox(styleName)
-    else
-        StyleBoxes[styleName] = Tabs.Skills:AddLeftGroupbox(styleName)
-    end
-    StyleBoxes[styleName]:AddLabel("Waiting detection...", true)
-end
 
 getgenv().SkillDelay = 6
 getgenv().SkillInterval = 3
@@ -409,6 +501,33 @@ getgenv().SkillInterval = 3
 SkillSettings:AddSlider("SkillDelaySlider", {Text = "Start Delay", Min = 0, Max = 15, Default = 6, Callback = function(v) getgenv().SkillDelay = v end})
 SkillSettings:AddSlider("SkillIntervalSlider", {Text = "Skill Interval", Min = 1, Max = 10, Default = 3, Callback = function(v) getgenv().SkillInterval = v end})
 
+-- Her stil için groupbox + her skill için toggle
+local StyleBoxes = {}
+for i, styleName in ipairs(StyleNames) do
+    if i <= 6 then
+        StyleBoxes[styleName] = Tabs.Skills:AddRightGroupbox(styleName)
+    else
+        StyleBoxes[styleName] = Tabs.Skills:AddLeftGroupbox(styleName)
+    end
+
+    for _, skill in pairs(MasterSkillList) do
+        if skill.Style == styleName then
+            local tag = skill.Type == "Ultimate" and " [ULT]" or ""
+            local grabTag = skill.IsGrab and " [GRAB]" or ""
+            StyleBoxes[styleName]:AddToggle("SkillToggle_" .. skill.Name, {
+                Text = skill.Name .. " (" .. skill.CD .. "s)" .. tag .. grabTag,
+                Default = true,
+                Callback = function(v)
+                    SkillEnabled[skill.Name] = v
+                end
+            })
+        end
+    end
+end
+
+--------------------------------------------------
+-- SKILL DETECTION & ROTATION
+--------------------------------------------------
 local DetectedSkills = {}
 local SkillTimers = {}
 local NormalCastCount = 0
@@ -442,26 +561,11 @@ local function DetectOwnedSkills()
     end
 
     Library:Notify("Success", "Found " .. #DetectedSkills .. " skills!")
-
-    for styleName, box in pairs(StyleBoxes) do
-        local texts = {}
-        for _, skill in pairs(DetectedSkills) do
-            if skill.Style == styleName then
-                local tag = skill.Type == "Ultimate" and " [ULT]" or ""
-                table.insert(texts, skill.Name .. " (" .. skill.CD .. "s)" .. tag)
-            end
-        end
-
-        if #texts > 0 then
-            box:AddLabel("--- Found ---", true)
-            for _, txt in pairs(texts) do box:AddLabel(txt, false) end
-        end
-    end
 end
 
 SkillSettings:AddButton("1. Detect Owned Skills", DetectOwnedSkills)
 
-local function GetClosestMob()
+local function GetClosestMobForSkill()
     local char = LP.Character
     if not char then return nil end
     local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -519,7 +623,7 @@ local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
                 task.wait(getgenv().SkillDelay)
 
                 while toggleRef do
-                    local currentTarget = GetClosestMob()
+                    local currentTarget = GetClosestMobForSkill()
 
                     if not currentTarget then
                         task.wait(1)
@@ -533,8 +637,9 @@ local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
                         local foundReadySkill = false
 
                         for _, skill in pairs(DetectedSkills) do
-                            if skill.Type == "Normal" then
-                                if CanUseSkill(skill) then
+                            -- Grab skill'i rotation'a dahil etme
+                            if skill.Type == "Normal" and not skill.IsGrab then
+                                if SkillEnabled[skill.Name] and CanUseSkill(skill) then
                                     skillToUse = skill
                                     foundReadySkill = true
                                     break
@@ -545,7 +650,7 @@ local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
                         if not foundReadySkill and TotalNormalSkills > 0 then
                             if NormalCastCount >= TotalNormalSkills then
                                 for _, skill in pairs(DetectedSkills) do
-                                    if skill.Type == "Ultimate" then
+                                    if skill.Type == "Ultimate" and SkillEnabled[skill.Name] then
                                         if CanUseSkill(skill) then
                                             skillToUse = skill
                                             NormalCastCount = 0
