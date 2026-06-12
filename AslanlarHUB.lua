@@ -240,8 +240,9 @@ FarmBox:AddSlider("HeightVal", {Text = "Height Offset", Min = -10, Max = 10, Def
 --------------------------------------------------
 local VoidGrabActive = false
 getgenv().VoidY_NPC = -520   -- NPC bu Y'ye ışınlanır (void'e düşer)
-getgenv().VoidY_Safe = -480
-getgenv().VoidWaitTime = 1.5  -- Sen bu Y'de durursun (güvenli)
+getgenv().VoidY_Safe = -480  -- Sen bu Y'de durursun (güvenli)
+getgenv().VoidGrabDelay = 0.6 -- Grab attıktan sonra ışınlamadan önceki bekleme
+getgenv().VoidWaitTime = 1.5  -- Işınladıktan sonra NPC'nin düşmesi için bekleme
 
 local VoidBox = Tabs.Main:AddRightGroupbox("Void Grab")
 
@@ -270,8 +271,16 @@ VoidBox:AddSlider("VoidSafeY", {
     Callback = function(v) getgenv().VoidY_Safe = v end
 })
 
+VoidBox:AddSlider("VoidGrabDelaySlider", {
+    Text = "Grab Sonrası Bekle (s)",
+    Min = 0.1,
+    Max = 2,
+    Default = 0.6,
+    Callback = function(v) getgenv().VoidGrabDelay = v end
+})
+
 VoidBox:AddSlider("VoidWaitSlider", {
-    Text = "Wait Time (s)",
+    Text = "Void Bekleme (s)",
     Min = 0.5,
     Max = 5,
     Default = 1.5,
@@ -292,7 +301,6 @@ task.spawn(function()
             local mobHrp = mob:FindFirstChild("HumanoidRootPart")
             if not mobHrp then task.wait(1) continue end
 
-            -- Shoulder Throw yap
             local backpack = LP.Backpack
             local grabTool = backpack:FindFirstChild("Shoulder Throw")
             if not grabTool then task.wait(1) continue end
@@ -300,33 +308,80 @@ task.spawn(function()
             -- Mevcut pozisyonu kaydet
             local savedPos = hrp.CFrame
 
-            -- Shoulder Throw kullan
+            -- 1. Shoulder Throw kullan
             char.Humanoid:EquipTool(grabTool)
             task.wait(0.15)
             VIM:SendMouseButtonEvent(0, 0, 0, true, game, 0)
             VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-            task.wait(0.3)
 
-            -- NPC ve karakteri void pozisyonuna ışınla
-            local voidPos = Vector3.new(mobHrp.Position.X, getgenv().VoidY_NPC, mobHrp.Position.Z)
-            local safePos = Vector3.new(hrp.Position.X, getgenv().VoidY_Safe, hrp.Position.Z)
+            -- 2. Grab animasyonu tutulsun diye bekle
+            task.wait(getgenv().VoidGrabDelay)
 
-            mobHrp.CFrame = CFrame.new(voidPos)
-            hrp.CFrame = CFrame.new(safePos)
+            -- 3. NPC'yi void'e, seni güvenli Y'ye anında ışınla
+            mobHrp.CFrame = CFrame.new(Vector3.new(mobHrp.Position.X, getgenv().VoidY_NPC, mobHrp.Position.Z))
+            hrp.CFrame = CFrame.new(Vector3.new(hrp.Position.X, getgenv().VoidY_Safe, hrp.Position.Z))
 
-            -- Animasyon bitene kadar bekle
+            -- 4. NPC düşsün diye bekle
             task.wait(getgenv().VoidWaitTime)
 
-            -- Eski pozisyona dön
+            -- 5. Eski pozisyona dön
             hrp.CFrame = savedPos
 
-            -- Combat weapon'a geri dön
+            -- 6. Combat weapon'a geri dön
             if getgenv().CombatWeapon then
                 local cTool = backpack:FindFirstChild(getgenv().CombatWeapon)
                 if cTool then char.Humanoid:EquipTool(cTool) end
             end
 
-            task.wait(1)
+            task.wait(0.5)
+        end
+    end
+end)
+
+--------------------------------------------------
+-- DIRECT VOID KILL
+--------------------------------------------------
+local DirectVoidActive = false
+getgenv().DirectVoidInterval = 0.5
+
+VoidBox:AddDivider()
+VoidBox:AddLabel("── Direct Void Kill ──", true)
+
+local DirectVoidToggle = VoidBox:AddToggle("DirectVoidToggle", {
+    Text = "Direct Void Kill",
+    Default = false,
+    Callback = function(v) DirectVoidActive = v end
+})
+DirectVoidToggle:AddKeyPicker("DirectVoidBind", {Default = "X", NoUI = false, Text = "Direct Void", SyncToggleState = true})
+
+VoidBox:AddSlider("DirectVoidIntervalSlider", {
+    Text = "Kill Interval (s)",
+    Min = 0.1,
+    Max = 3,
+    Default = 0.5,
+    Callback = function(v) getgenv().DirectVoidInterval = v end
+})
+
+task.spawn(function()
+    while true do
+        task.wait(getgenv().DirectVoidInterval)
+        if DirectVoidActive then
+            local mobs = workspace:FindFirstChild("Mobs")
+            if not mobs then continue end
+            local char = LP.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then continue end
+
+            for _, m in pairs(mobs:GetChildren()) do
+                local mHrp = m:FindFirstChild("HumanoidRootPart")
+                local hum = m:FindFirstChildWhichIsA("Humanoid")
+                if mHrp and hum and hum.Health > 0 and isNPCAllowed(m) then
+                    local d = (hrp.Position - mHrp.Position).Magnitude
+                    if d <= getgenv().NPCRange then
+                        mHrp.CFrame = CFrame.new(Vector3.new(mHrp.Position.X, getgenv().VoidY_NPC, mHrp.Position.Z))
+                    end
+                end
+            end
         end
     end
 end)
