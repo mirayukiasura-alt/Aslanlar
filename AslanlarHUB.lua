@@ -1,18 +1,17 @@
 getgenv().SHAMPO = true
 if game.GameId ~= 4652005960 then return end
 
--- GitHub Reponuzdan Kütüphaneleri Güvenli Şekilde Çekme
+-- GitHub Repondan Dosyaları Çekme
 local repo = "https://raw.githubusercontent.com/mirayukiasura-alt/Aslanlar/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
-local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/addons/ThemeManager.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/addons/SaveManager.lua"))()
+local ThemeManager = loadstring(game:HttpGet(repo .. "ThemeManager.lua"))()
+local SaveManager = loadstring(game:HttpGet(repo .. "SaveManager.lua"))()
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local VIM = game:GetService("VirtualInputManager")
 local LP = Players.LocalPlayer
 
--- CSS Tasarımındaki Yazılara Uygun Başlık Yapısı
 local Window = Library:CreateWindow({
     Title = "AslanlarHUB",
     Footer = "FREE MIRA | UNBAN MIRA YUKI",
@@ -20,19 +19,17 @@ local Window = Library:CreateWindow({
     ShowCustomCursor = false
 })
 
--- Kütüphanenin çökmemesi için string ikon parametreleriyle sekmeler
+-- Kütüphanenin orijinal yapısına uygun İkon Tanımlamaları (Lucide)
 local Tabs = {
-    Main = Window:AddTab("Main"),
-    Skills = Window:AddTab("Skills"),
-    ["UI Settings"] = Window:AddTab("UI Settings"),
+    Main = Window:AddTab("Main", "home"),         -- Ana sekme için ev ikonu
+    Skills = Window:AddTab("Skills", "bolt"),     -- Skills sekmesi için şimşek ikonu
+    ["UI Settings"] = Window:AddTab("UI Settings", "settings"), -- Ayarlar sekmesi
 }
 
--- Grup Kutularının Oluşturulması
 local FarmBox = Tabs.Main:AddLeftGroupbox("Combat Tools")
 local NPCBox = Tabs.Main:AddRightGroupbox("NPC Filter")
 local AutoBox = Tabs.Main:AddRightGroupbox("Automation")
 
--- HTML Tasarımındaki Ortalanmış Özel Warn Label Yapısı
 FarmBox:AddLabel("⚠️ UNBAN MIRA YUKI ⚠️", true)
 FarmBox:AddLabel("📢 FREE MIRA 📢", true)
 FarmBox:AddDivider()
