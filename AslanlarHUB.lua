@@ -3,7 +3,6 @@ if game.GameId ~= 4652005960 then return end
 
 local repo = "https://raw.githubusercontent.com/mirayukiasura-alt/Aslanlar/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
-local ThemeManager = loadstring(game:HttpGet(repo .. "ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "SaveManager.lua"))()
 
 local Players = game:GetService("Players")
@@ -12,10 +11,8 @@ local VIM = game:GetService("VirtualInputManager")
 local LP = Players.LocalPlayer
 
 local Window = Library:CreateWindow({
-    Title = "AslanlarHUB",
+    Title = "AslanlarHUB ◆ Premium Edition",
     Footer = "FREE MIRA | UNBAN MIRA YUKI",
-    NotifySide = "Right",
-    ShowCustomCursor = false
 })
 
 local Tabs = {
@@ -139,7 +136,7 @@ local function getClosestAllowedMobFull()
 end
 
 --------------------------------------------------
--- TOOL SYSTEM (Mode Tool olarak düzenlendi)
+-- TOOL SYSTEM
 --------------------------------------------------
 getgenv().SelectedWeapon = nil
 getgenv().CombatWeapon = nil
@@ -541,35 +538,8 @@ SkillToggle:AddKeyPicker("SkillBind", {Default = "T", NoUI = false, Text = "Skil
 -- UI SETTINGS
 --------------------------------------------------
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu Settings")
-
-MenuGroup:AddDropdown("DPIDropdown", {
-    Values = { "50%", "75%", "100%", "125%", "150%", "175%", "200%" },
-    Default = "100%",
-    Text = "DPI Scale",
-    Callback = function(Value)
-        Value = Value:gsub("%%", "")
-        local DPI = tonumber(Value)
-        Library:SetDPIScale(DPI)
-    end,
-})
-MenuGroup:AddDivider()
 MenuGroup:AddLabel("Menu bind"):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu keybind", ChangedCallback = function(New) Library.ToggleKeybind = New end})
-
 MenuGroup:AddButton("Unload Script", function() Library:Unload() end)
+
 Library.ToggleKeybind = Enum.KeyCode.RightShift
-
-ThemeManager:SetLibrary(Library)
-SaveManager:SetLibrary(Library)
-
-SaveManager:IgnoreThemeSettings()
-SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
-
-ThemeManager:SetFolder("GofretSystem/AslanlarHub")
-SaveManager:SetFolder("GofretSystem/AslanlarHub/" .. game.Name)
-SaveManager:SetSubFolder(game.Name)
-
-SaveManager:BuildConfigSection(Tabs["UI Settings"])
-ThemeManager:ApplyToTab(Tabs["UI Settings"])
-
-SaveManager:LoadAutoloadConfig()
-Library:Toggle(false)
+Library:Toggle()
