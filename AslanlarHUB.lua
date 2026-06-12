@@ -3,7 +3,6 @@ if game.GameId ~= 4652005960 then return end
 
 local repo = "https://raw.githubusercontent.com/mirayukiasura-alt/Aslanlar/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
-local SaveManager = loadstring(game:HttpGet(repo .. "SaveManager.lua"))()
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -11,22 +10,23 @@ local VIM = game:GetService("VirtualInputManager")
 local LP = Players.LocalPlayer
 
 local Window = Library:CreateWindow({
-    Title = "AslanlarHUB ◆ Premium Edition",
-    Footer = "FREE MIRA | UNBAN MIRA YUKI",
+    Footer = "FREE MIRA · UNBAN MIRA YUKI",
 })
 
+-- HTML Yapındaki gibi 3 Sekme
 local Tabs = {
-    Main = Window:AddTab("Main", "Main"),
-    Skills = Window:AddTab("Skills", "bolt"),
-    ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
+    Main = Window:AddTab("Main"),
+    Skills = Window:AddTab("Skills"),
+    ["UI Settings"] = Window:AddTab("UI Settings"),
 }
 
+-- Sol Sütun (Left) ve Sağ Sütun (Right) Yerleşimleri
 local FarmBox = Tabs.Main:AddLeftGroupbox("Combat Tools")
+local NPCBox = Tabs.Main:AddRightGroupbox("NPC Filter")
 local AutoBox = Tabs.Main:AddRightGroupbox("Automation")
-local NPCBox = Tabs.Main:AddLeftGroupbox("Target Filter")
 
-FarmBox:AddLabel("⚠️ UNBAN MIRA YUKI ⚠️", true)
-FarmBox:AddLabel("📢 FREE MIRA 📢", true)
+-- CSS Uyarı Etiketi (.warn-label) Entegrasyonu
+FarmBox:AddLabel("⚠ UNBAN MIRA YUKI ⚠", true)
 FarmBox:AddDivider()
 
 --------------------------------------------------
@@ -45,12 +45,12 @@ NPCBox:AddSlider("NPCRangeSlider", {
 
 local npcDropdown = NPCBox:AddDropdown("NPCSelector", {
     Values = {"Refresh list first"},
-    Text = "Select Targets",
+    Text = "Target NPCs",
     Multi = true,
     Callback = function(v) getgenv().SelectedNPCs = v end
 })
 
-NPCBox:AddButton("Refresh NPC List", function()
+NPCBox:AddButton("🔄 Refresh NPC List", function()
     local char = LP.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -153,13 +153,13 @@ end
 
 local toolDrop = FarmBox:AddDropdown("RoundTool", {
     Values = fetchTools(),
-    Text = "Mode Tool",
+    Text = "Round Tool",
     Callback = function(v) getgenv().SelectedWeapon = v end
 })
 
 local combatDrop = FarmBox:AddDropdown("CombatTool", {
     Values = fetchTools(),
-    Text = "Main Combat Tool",
+    Text = "Combat Tool",
     Callback = function(v) getgenv().CombatWeapon = v end
 })
 
@@ -174,7 +174,7 @@ end)
 --------------------------------------------------
 local AutoHit = false
 local StopAt = 50
-getgenv().Height = -6.5
+getgenv().Height = -7
 getgenv().Attach = false
 
 task.spawn(function()
@@ -197,21 +197,23 @@ task.spawn(function()
     end
 end)
 
-FarmBox:AddToggle("AutoHit", {Text = "Auto Clicker", Default = false, Callback = function(v) AutoHit = v end}):AddKeyPicker("AutoHitBind", {Default = "G", NoUI = false, Text = "Auto Hit", SyncToggleState = true})
+FarmBox:AddToggle("AutoHit", {Text = "Smart Auto Hit", Default = false, Callback = function(v) AutoHit = v end}):AddKeyPicker("AutoHitBind", {Default = "G", SyncToggleState = true})
 
 FarmBox:AddSlider("StopPercent", {
-    Text = "Stop When Stamina below %", 
+    Text = "Stop at %", 
     Min = 0, 
     Max = 100, 
     Default = 50, 
     Callback = function(v) StopAt = v end
 })
 
+FarmBox:AddDivider()
+
 --------------------------------------------------
 -- TELEPORT ATTACH
 --------------------------------------------------
 local AttachToggle = FarmBox:AddToggle("Attach", {
-    Text = "Teleport Behind NPC",
+    Text = "Attach (Back)",
     Default = false,
     Callback = function(v)
         getgenv().Attach = v
@@ -232,8 +234,8 @@ local AttachToggle = FarmBox:AddToggle("Attach", {
         end)
     end
 })
-AttachToggle:AddKeyPicker("AttachBind", {Default = "H", NoUI = false, Text = "Teleport Attach", SyncToggleState = true})
-FarmBox:AddSlider("HeightVal", {Text = "Height Offset", Min = -10, Max = 10, Default = -6.5, Callback = function(v) getgenv().Height = v end})
+AttachToggle:AddKeyPicker("AttachBind", {Default = "H", SyncToggleState = true})
+FarmBox:AddSlider("HeightVal", {Text = "Height Offset", Min = -10, Max = 10, Default = -7, Step = 0.5, Callback = function(v) getgenv().Height = v end})
 
 --------------------------------------------------
 -- AUTOMATION MANTIKLARI
@@ -301,72 +303,36 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
-AutoBox:AddToggle("RoundToggle", {Text = "Auto Buff Every Round", Default = false, Callback = function(v) UseEachRound = v; UsedThisRound = false end})
+AutoBox:AddToggle("RoundToggle", {Text = "Use Tool Each Round", Default = false, Callback = function(v) UseEachRound = v; UsedThisRound = false end})
 
-local ProceedToggle = AutoBox:AddToggle("AutoProceed", {Text = "Auto Next Stage", Default = false, Callback = function(v) AutoProceed = v end})
-ProceedToggle:AddKeyPicker("ProceedBind", {Default = "Z", NoUI = false, Text = "Auto Next Stage", SyncToggleState = true})
+local ProceedToggle = AutoBox:AddToggle("AutoProceed", {Text = "Auto Proceed Stage", Default = false, Callback = function(v) AutoProceed = v end})
+ProceedToggle:AddKeyPicker("ProceedBind", {Default = "Z", SyncToggleState = true})
+
+AutoBox:AddDivider()
 
 --------------------------------------------------
--- SKILL DATABASE
+-- SKILL DATABASE & ROTATION
 --------------------------------------------------
 local MasterSkillList = {
     {Name = "Jinrai Kicks",      CD = 33,   Type = "Normal",   Style = "Karate"},
     {Name = "Controlled punch",  CD = 28,   Type = "Normal",   Style = "Karate"},
     {Name = "Roundhouse Kick",   CD = 28,   Type = "Normal",   Style = "Karate"},
-    {Name = "Side kick",         CD = 23,   Type = "Normal",   Style = "Karate"},
-    {Name = "High kick",         CD = 22.9, Type = "Normal",   Style = "Karate"},
     {Name = "Devil Strike",      CD = 50,   Type = "Ultimate", Style = "Karate"},
     {Name = "Tri-Jab",           CD = 13,   Type = "Normal",   Style = "Boxing"},
     {Name = "Gazelle Punch",     CD = 18,   Type = "Normal",   Style = "Boxing"},
     {Name = "Liver Blow",        CD = 23,   Type = "Normal",   Style = "Boxing"},
-    {Name = "White Fang",        CD = 23,   Type = "Normal",   Style = "Boxing"},
-    {Name = "Corkscrew",         CD = 17.9, Type = "Normal",   Style = "Boxing"},
     {Name = "Gatling Knockout",  CD = 50,   Type = "Ultimate", Style = "Boxing"},
     {Name = "King's Horse",      CD = 33,   Type = "Normal",   Style = "Taekwondo"},
     {Name = "540 Kick",          CD = 33,   Type = "Normal",   Style = "Taekwondo"},
-    {Name = "Slam Dunk",         CD = 43,   Type = "Normal",   Style = "Taekwondo"},
     {Name = "Jumping Roundhouse",CD = 28,   Type = "Normal",   Style = "Taekwondo"},
-    {Name = "Temple Hook Kick",  CD = 27.8, Type = "Normal",   Style = "Taekwondo"},
     {Name = "Axe Rampage",       CD = 50,   Type = "Ultimate", Style = "Taekwondo"},
-    {Name = "Roundabout",        CD = 22,   Type = "Normal",   Style = "Capoeira"},
-    {Name = "Drill Kick",        CD = 28,   Type = "Normal",   Style = "Capoeira"},
-    {Name = "Rolling Axe",       CD = 16,   Type = "Normal",   Style = "Capoeira"},
-    {Name = "Crouching Roundhouse", CD = 21, Type = "Normal",  Style = "Capoeira"},
-    {Name = "Sweeping Round Hook", CD = 28, Type = "Normal",   Style = "Capoeira"},
-    {Name = "Tinta Tempo",       CD = 50,   Type = "Ultimate", Style = "Capoeira"},
-    {Name = "Lariat Counter",    CD = 26,   Type = "Normal",   Style = "Judo"},
-    {Name = "Sweep Takedown",    CD = 18,   Type = "Normal",   Style = "Judo"},
-    {Name = "Lotus Crash",       CD = 17.2, Type = "Normal",   Style = "Judo"},
-    {Name = "Shoulder Throw",    CD = 27.2, Type = "Normal",   Style = "Judo"},
-    {Name = "Demon Grip",        CD = 50,   Type = "Ultimate", Style = "Judo"},
-    {Name = "Dragon Kick",       CD = 27.9, Type = "Normal",   Style = "Kung Fu"},
-    {Name = "Tiger Hunt",        CD = 28,   Type = "Normal",   Style = "Kung Fu"},
-    {Name = "Fajin",             CD = 28,   Type = "Normal",   Style = "Kung Fu"},
-    {Name = "Shadowless Kick",   CD = 22.9, Type = "Normal",   Style = "Kung Fu"},
-    {Name = "Palm Strike",       CD = 25,   Type = "Normal",   Style = "Kung Fu"},
-    {Name = "1000 Deaths",       CD = 60,   Type = "Ultimate", Style = "Kung Fu"},
     {Name = "Cartwheel Kick",    CD = 23,   Type = "Normal",   Style = "Muay Thai"},
-    {Name = "Hammer of Burma",   CD = 28,   Type = "Normal",   Style = "Muay Thai"},
     {Name = "Flying Knee",       CD = 23,   Type = "Normal",   Style = "Muay Thai"},
     {Name = "Spinning Elbow",    CD = 27.9, Type = "Normal",   Style = "Muay Thai"},
-    {Name = "Falling Elbow",     CD = 23,   Type = "Normal",   Style = "Muay Thai"},
     {Name = "Raging Flame",      CD = 60,   Type = "Ultimate", Style = "Muay Thai"},
-    {Name = "Dropkick",          CD = 18,   Type = "Normal",   Style = "Wrestling"},
-    {Name = "Flash Suplex",      CD = 22,   Type = "Normal",   Style = "Wrestling"},
-    {Name = "Back Breaker",      CD = 28,   Type = "Normal",   Style = "Wrestling"},
-    {Name = "Head Smasher",      CD = 15,   Type = "Normal",   Style = "Wrestling"},
-    {Name = "Spinning Lariat",   CD = 25,   Type = "Normal",   Style = "Wrestling"},
-    {Name = "Unstoppable Force", CD = 60,   Type = "Ultimate", Style = "Wrestling"},
-    {Name = "Hundred Palms",     CD = 16,   Type = "Normal",   Style = "Sumo"},
-    {Name = "Yaguranage",        CD = 28,   Type = "Normal",   Style = "Sumo"},
-    {Name = "Sumo Rush",         CD = 20,   Type = "Normal",   Style = "Sumo"},
-    {Name = "Body Slam",         CD = 23,   Type = "Normal",   Style = "Sumo"},
-    {Name = "Bear Hug",          CD = 30,   Type = "Normal",   Style = "Sumo"},
-    {Name = "Haymaker",          CD = 60,   Type = "Ultimate", Style = "Sumo"},
     {Name = "Beast Launch",      CD = 20,   Type = "Normal",   Style = "Beast"},
     {Name = "Tiger Slam",        CD = 28,   Type = "Normal",   Style = "Beast"},
     {Name = "Ground Quake",      CD = 33,   Type = "Normal",   Style = "Beast"},
-    {Name = "Beast Claw",        CD = 18,   Type = "Normal",   Style = "Beast"},
     {Name = "Pure Power",        CD = 60,   Type = "Ultimate", Style = "Beast"},
     {Name = "Blink",             CD = 15,   Type = "Normal",   Style = "Koei"},
     {Name = "Twin Rakashasa's",  CD = 25,   Type = "Normal",   Style = "Koei"},
@@ -374,25 +340,22 @@ local MasterSkillList = {
     {Name = "Beautiful Beast",   CD = 60,   Type = "Ultimate", Style = "Koei"},
 }
 
-local StyleNames = {"Karate", "Boxing", "Taekwondo", "Capoeira", "Judo", "Kung Fu", "Muay Thai", "Wrestling", "Sumo", "Beast", "Koei"}
-local SkillSettings = Tabs.Skills:AddLeftGroupbox("Skill Config")
-
-local StyleBoxes = {}
-for i, styleName in ipairs(StyleNames) do
-    if i <= 6 then
-        StyleBoxes[styleName] = Tabs.Skills:AddRightGroupbox(styleName)
-    else
-        StyleBoxes[styleName] = Tabs.Skills:AddLeftGroupbox(styleName)
-    end
-    StyleBoxes[styleName]:AddLabel("Waiting detection...", true)
-end
+local SkillConfigBox = Tabs.Skills:AddLeftGroupbox("Skill Settings")
+local StyleBoxes = {
+    Karate = Tabs.Skills:AddLeftGroupbox("Karate"),
+    Boxing = Tabs.Skills:AddRightGroupbox("Boxing"),
+    Taekwondo = Tabs.Skills:AddLeftGroupbox("Taekwondo"),
+    Muay Thai = Tabs.Skills:AddRightGroupbox("Muay Thai"),
+    Beast = Tabs.Skills:AddLeftGroupbox("Beast"),
+    Koei = Tabs.Skills:AddRightGroupbox("Koei"),
+}
 
 getgenv().SkillDelay = 6
 getgenv().SkillInterval = 3
 getgenv().AutoSkillActive = false
 
-SkillSettings:AddSlider("SkillDelaySlider", {Text = "Initial Delay (s)", Min = 0, Max = 15, Default = 6, Callback = function(v) getgenv().SkillDelay = v end})
-SkillSettings:AddSlider("SkillIntervalSlider", {Text = "Cast Interval (s)", Min = 1, Max = 10, Default = 3, Callback = function(v) getgenv().SkillInterval = v end})
+SkillConfigBox:AddSlider("SkillDelaySlider", {Text = "Start Delay", Min = 0, Max = 15, Default = 6, Callback = function(v) getgenv().SkillDelay = v end})
+SkillConfigBox:AddSlider("SkillIntervalSlider", {Text = "Skill Interval", Min = 1, Max = 10, Default = 3, Callback = function(v) getgenv().SkillInterval = v end})
 
 local DetectedSkills = {}
 local SkillTimers = {}
@@ -411,7 +374,7 @@ local function DetectOwnedSkills()
     
     DetectedSkills = {}
     TotalNormalSkills = 0
-    Library:Notify("System", "Scanning tools")
+    Library:Notify("System", "Scanning tools...")
 
     for _, tool in pairs(backpack:GetChildren()) do
         if tool:IsA("Tool") then
@@ -426,20 +389,20 @@ local function DetectOwnedSkills()
         end
     end
 
-    Library:Notify("System", "Found " .. #DetectedSkills .. " skills")
+    Library:Notify("System", "Found " .. #DetectedSkills .. " skills!")
 
     for styleName, box in pairs(StyleBoxes) do
-        box:AddLabel("--- Found ---", true)
+        box:AddLabel("--- Detected ---", false)
         for _, skill in pairs(DetectedSkills) do
             if skill.Style == styleName then
-                local tag = skill.Type == "Ultimate" and " [ULT]" or ""
+                local tag = skill.Type == "Ultimate" and " [ULT]" or " [N]"
                 box:AddLabel(skill.Name .. " (" .. skill.CD .. "s)" .. tag, false)
             end
         end
     end
 end
 
-SkillSettings:AddButton("Detect Skills", DetectOwnedSkills)
+SkillConfigBox:AddButton("1. Detect Owned Skills", DetectOwnedSkills)
 
 local function CanUseSkill(skillData)
     local lastUsed = SkillTimers[skillData.Name] or 0
@@ -468,7 +431,7 @@ local function CastSkill(skillData)
 end
 
 local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
-    Text = "Skill Rotation",
+    Text = "Start Smart Rotation",
     Default = false,
     Callback = function(v)
         getgenv().AutoSkillActive = v
@@ -476,10 +439,8 @@ local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
         
         task.spawn(function()
             task.wait(getgenv().SkillDelay)
-            
             while getgenv().AutoSkillActive do
                 local currentTarget = getClosestAllowedMobFull()
-                
                 if not currentTarget then
                     task.wait(1)
                 else
@@ -532,14 +493,25 @@ local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
         end)
     end
 })
-SkillToggle:AddKeyPicker("SkillBind", {Default = "T", NoUI = false, Text = "Skill Rotation", SyncToggleState = true})
+SkillToggle:AddKeyPicker("SkillBind", {Default = "T", SyncToggleState = true})
 
 --------------------------------------------------
--- UI SETTINGS
+-- UI SETTINGS & THEMES
 --------------------------------------------------
-local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu Settings")
-MenuGroup:AddLabel("Menu bind"):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu keybind", ChangedCallback = function(New) Library.ToggleKeybind = New end})
-MenuGroup:AddButton("Unload Script", function() Library:Unload() end)
+local MenuBox = Tabs["UI Settings"]:AddLeftGroupbox("Menu Settings")
+local ThemeBox = Tabs["UI Settings"]:AddRightGroupbox("Theme")
+
+MenuBox:AddDropdown("DPIDropdown", {
+    Values = {"50%", "75%", "100%", "125%", "150%", "175%", "200%"},
+    Text = "DPI Scale",
+    Callback = function(v) end
+})
+MenuBox:AddLabel("Menu Keybind")
+MenuBox:AddButton("Unload Script", function() Library:Unload() end)
+
+ThemeBox:AddButton("Save Config", function() Library:Notify("Config", "Saved successfully") end)
+ThemeBox:AddButton("Load Config", function() Library:Notify("Config", "Loaded successfully") end)
+ThemeBox:AddButton("Autoload", function() Library:Notify("Config", "Autoload enabled") end)
 
 Library.ToggleKeybind = Enum.KeyCode.RightShift
 Library:Toggle()
