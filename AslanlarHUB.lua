@@ -31,6 +31,120 @@ FarmBox:AddLabel("⚠️ UNBAN MIRA YUKI ⚠️", true)
 FarmBox:AddLabel("📢 FREE MIRA 📢", true)
 FarmBox:AddDivider()
 
+--------------------------------------------------
+-- NPC FILTER SYSTEM (ENTEGRASYON)
+--------------------------------------------------
+getgenv().NPCRange = 500
+getgenv().SelectedNPCs = {}
+
+local NPCBox = Tabs.Main:AddLeftGroupbox("NPC Filter")
+
+NPCBox:AddSlider("NPCRangeSlider", {
+    Text = "Scan Range (studs)",
+    Min = 50,
+    Max = 5000,
+    Default = 500,
+    Callback = function(v) getgenv().NPCRange = v end
+})
+
+local npcDropdown = NPCBox:AddDropdown("NPCSelector", {
+    Values = {"(Refresh first)"},
+    Text = "Select Target NPCs",
+    Multi = true,
+    Callback = function(v) getgenv().SelectedNPCs = v end
+})
+
+NPCBox:AddButton("🔄 Refresh NPC List", function()
+    local char = LP.Character
+    if not char then Library:Notify("Error", "No character found!") return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local mobs = workspace:FindFirstChild("Mobs")
+    if not hrp or not mobs then Library:Notify("Error", "No Mobs folder found!") return end
+
+    local found = {}
+    local nameSet = {}
+    for _, m in pairs(mobs:GetChildren()) do
+        local mHrp = m:FindFirstChild("HumanoidRootPart")
+        local hum = m:FindFirstChildWhichIsA("Humanoid")
+        if mHrp and hum and hum.Health > 0 then
+            local dist = (hrp.Position - mHrp.Position).Magnitude
+            if dist <= getgenv().NPCRange and not nameSet[m.Name] then
+                nameSet[m.Name] = true
+                table.insert(found, m.Name)
+            end
+        end
+    end
+
+    if #found == 0 then Library:Notify("NPC Scan", "No NPCs found in range!") return end
+    table.sort(found)
+    npcDropdown:SetValues(found)
+    getgenv().SelectedNPCs = {}
+    Library:Notify("NPC Scan", "Found " .. #found .. " NPC type(s)!")
+end)
+
+NPCBox:AddButton("Clear Selection", function()
+    getgenv().SelectedNPCs = {}
+    npcDropdown:SetValues({"(Refresh first)"})
+    Library:Notify("NPC Filter", "Selection cleared!")
+end)
+
+--------------------------------------------------
+-- NPC ALLOWED FILTER FUNCTIONS
+--------------------------------------------------
+local function isNPCAllowed(mob)
+    local hasSelection = false
+    for _ in pairs(getgenv().SelectedNPCs) do hasSelection = true break end
+    if not hasSelection then return true end
+    return getgenv().SelectedNPCs[mob.Name] == true
+end
+
+local function getClosestAllowedMobHrp()
+    local char = LP.Character
+    if not char then return nil end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local mobs = workspace:FindFirstChild("Mobs")
+    if not hrp or not mobs then return nil end
+
+    local closest, dist = nil, math.huge
+    for _, m in pairs(mobs:GetChildren()) do
+        local mHrp = m:FindFirstChild("HumanoidRootPart")
+        local hum = m:FindFirstChildWhichIsA("Humanoid")
+        if mHrp and hum and hum.Health > 0 and isNPCAllowed(m) then
+            local d = (hrp.Position - mHrp.Position).Magnitude
+            if d <= getgenv().NPCRange and d < dist then
+                dist = d
+                closest = mHrp
+            end
+        end
+    end
+    return closest
+end
+
+local function getClosestAllowedMobFull()
+    local char = LP.Character
+    if not char then return nil end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local mobs = workspace:FindFirstChild("Mobs")
+    if not hrp or not mobs then return nil end
+
+    local closest, dist = nil, math.huge
+    for _, m in pairs(mobs:GetChildren()) do
+        local mHrp = m:FindFirstChild("HumanoidRootPart")
+        local hum = m:FindFirstChildWhichIsA("Humanoid")
+        if mHrp and hum and hum.Health > 0 and isNPCAllowed(m) then
+            local d = (hrp.Position - mHrp.Position).Magnitude
+            if d <= getgenv().NPCRange and d < dist then
+                dist = d
+                closest = m
+            end
+        end
+    end
+    return closest
+end
+
+--------------------------------------------------
+-- TOOL SYSTEM
+--------------------------------------------------
 getgenv().SelectedWeapon = nil
 getgenv().CombatWeapon = nil
 
@@ -62,6 +176,9 @@ FarmBox:AddButton("Refresh Tools", function()
     combatDrop:SetValues(tools)
 end)
 
+--------------------------------------------------
+-- AUTO HIT
+--------------------------------------------------
 local AutoHit = false
 local StopAt = 50
 getgenv().Height = -6.5
@@ -92,6 +209,9 @@ HitToggle:AddKeyPicker("AutoHitBind", {Default = "G", NoUI = false, Text = "Auto
 
 FarmBox:AddSlider("StopPercent", {Text = "Stop at %", Min = 0, Max = 100, Default = 50, Callback = function(v) StopAt = v end})
 
+--------------------------------------------------
+-- ATTACH (UPDATED WITH FILTER)
+--------------------------------------------------
 local AttachToggle = FarmBox:AddToggle("Attach", {
     Text = "Attach (Back)",
     Default = false,
@@ -104,21 +224,10 @@ local AttachToggle = FarmBox:AddToggle("Attach", {
             local char = LP.Character
             if not char or not getgenv().Attach then return end
             local hrp = char:FindFirstChild("HumanoidRootPart")
-            local mobs = workspace:FindFirstChild("Mobs")
-            if not hrp or not mobs then return end
+            if not hrp then return end
             
-            local closest, dist = nil, math.huge
-            for _, m in pairs(mobs:GetChildren()) do
-                local mHrp = m:FindFirstChild("HumanoidRootPart")
-                local hum = m:FindFirstChildWhichIsA("Humanoid")
-                if mHrp and hum and hum.Health > 0 then
-                    local d = (hrp.Position - mHrp.Position).Magnitude
-                    if d < dist then
-                        dist = d
-                        closest = mHrp
-                    end
-                end
-            end
+            -- Filtrelenmiş en yakın NPC'yi alıyoruz
+            local closest = getClosestAllowedMobHrp()
             
             if closest then
                 local pos = closest.Position + closest.CFrame.LookVector * -2.5 + Vector3.new(0, getgenv().Height, 0)
@@ -130,6 +239,9 @@ local AttachToggle = FarmBox:AddToggle("Attach", {
 AttachToggle:AddKeyPicker("AttachBind", {Default = "H", NoUI = false, Text = "Attach", SyncToggleState = true})
 FarmBox:AddSlider("HeightVal", {Text = "Height Offset", Min = -10, Max = 10, Default = -6.5, Callback = function(v) getgenv().Height = v end})
 
+--------------------------------------------------
+-- AUTOMATION
+--------------------------------------------------
 local UseEachRound = false
 local UsedThisRound = false
 local AutoProceed = false
@@ -364,28 +476,6 @@ end
 
 SkillSettings:AddButton("1. Detect Owned Skills", DetectOwnedSkills)
 
-local function GetClosestMob()
-    local char = LP.Character
-    if not char then return nil end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local mobs = workspace:FindFirstChild("Mobs")
-    if not hrp or not mobs then return nil end
-    
-    local closest, dist = nil, math.huge
-    for _, m in pairs(mobs:GetChildren()) do
-        local mHrp = m:FindFirstChild("HumanoidRootPart")
-        local hum = m:FindFirstChildWhichIsA("Humanoid")
-         if mHrp and hum and hum.Health > 0 then
-            local d = (hrp.Position - mHrp.Position).Magnitude
-            if d < dist then
-                dist = d
-                closest = m
-            end
-         end
-    end
-    return closest
-end
-
 local function CanUseSkill(skillData)
     local lastUsed = SkillTimers[skillData.Name] or 0
     return tick() - lastUsed >= skillData.CD
@@ -412,6 +502,9 @@ local function CastSkill(skillData)
     return true
 end
 
+--------------------------------------------------
+-- SMART ROTATION (UPDATED WITH FILTER)
+--------------------------------------------------
 local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
     Text = "Start Smart Rotation",
     Default = false,
@@ -422,7 +515,8 @@ local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
                 task.wait(getgenv().SkillDelay)
                 
                 while toggleRef do
-                    local currentTarget = GetClosestMob()
+                    -- Filtrelenmiş en yakın tam NPC modelini alıyoruz
+                    local currentTarget = getClosestAllowedMobFull()
                     
                     if not currentTarget then
                         task.wait(1)
@@ -480,6 +574,9 @@ local SkillToggle = AutoBox:AddToggle("AutoSkillMaster", {
 
 SkillToggle:AddKeyPicker("SkillBind", {Default = "T", NoUI = false, Text = "Auto Skill", SyncToggleState = true})
 
+--------------------------------------------------
+-- UI SETTINGS
+--------------------------------------------------
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu Settings")
 
 MenuGroup:AddDropdown("DPIDropdown", {
