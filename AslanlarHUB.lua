@@ -19,11 +19,11 @@ local Window = Library:CreateWindow({
     ShowCustomCursor = false
 })
 
--- Kütüphanenin orijinal yapısına uygun İkon Tanımlamaları (Lucide)
+-- Kütüphanenin kendi Lucide motoruna uygun ikon etiketlemeleri
 local Tabs = {
-    Main = Window:AddTab("Main", "home"),         -- Ana sekme için ev ikonu
-    Skills = Window:AddTab("Skills", "bolt"),     -- Skills sekmesi için şimşek ikonu
-    ["UI Settings"] = Window:AddTab("UI Settings", "settings"), -- Ayarlar sekmesi
+    Main = Window:AddTab("Main", "home"),         
+    Skills = Window:AddTab("Skills", "bolt"),     
+    ["UI Settings"] = Window:AddTab("UI Settings", "settings"), 
 }
 
 local FarmBox = Tabs.Main:AddLeftGroupbox("Combat Tools")
@@ -83,7 +83,7 @@ local StopAt = 50
 task.spawn(function()
     while true do
         task.wait(0.01)
-        if AutoHit and not Library.Open then
+        if AutoHit then
             local gui = LP.PlayerGui:FindFirstChild("Main")
             if gui then
                 local staminaBar = gui.HUD.Stamina.Clipping
